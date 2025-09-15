@@ -16,7 +16,7 @@ To get started with Revit-MCP, you need to set up the server, the plugin, and th
 
 ### 1. Environment Requirements
 
-- **Revit:** 2019-2024
+- **Revit:** 2019-2025
 - **Node.js:** v18 or later
 
 ### 2. Set Up the Server
