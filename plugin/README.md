@@ -10,7 +10,7 @@ This project is part of the revit-mcp project (receives messages, loads command 
 
 ## Environment Requirements
 
-- Revit 2019~2024
+- Revit 2019~2025
 
 ## Usage Instructions
 
