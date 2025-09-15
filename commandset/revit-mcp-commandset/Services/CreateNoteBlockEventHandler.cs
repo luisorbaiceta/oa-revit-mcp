@@ -24,6 +24,7 @@
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using RevitMCPCommandSet.Models.Views;
+using RevitMCPCommandSet.Models.Common;
 using RevitMCPSDK.API.Interfaces;
 using System.Threading;
 
@@ -44,8 +45,7 @@ public class CreateNoteBlockEventHandler : IExternalEventHandler, IWaitableExter
             transaction.Start();
 
             var familyId = new ElementId(CreationInfo.FamilyId);
-            var viewId = new ElementId(CreationInfo.ViewId);
-            var noteBlock = ViewSchedule.CreateNoteBlock(doc, familyId, viewId);
+            var noteBlock = ViewSchedule.CreateNoteBlock(doc, familyId);
 
             transaction.Commit();
 

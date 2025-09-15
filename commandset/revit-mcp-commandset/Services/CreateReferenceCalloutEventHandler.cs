@@ -59,21 +59,19 @@ public class CreateReferenceCalloutEventHandler : IExternalEventHandler, IWaitab
                 }
             };
 
-            var viewSection = ViewSection.CreateReferenceCallout(doc, parentViewId, viewFamilyTypeId, sectionBox);
+            // Define the required points for the callout
+            var point1 = new XYZ(CreationInfo.CalloutPoint1.X, CreationInfo.CalloutPoint1.Y, CreationInfo.CalloutPoint1.Z);
+            var point2 = new XYZ(CreationInfo.CalloutPoint2.X, CreationInfo.CalloutPoint2.Y, CreationInfo.CalloutPoint2.Z);
+
+            // Create the reference callout
+            ViewSection.CreateReferenceCallout(doc, parentViewId, viewFamilyTypeId, point1, point2);
 
             transaction.Commit();
 
             Result = new AIResult<ViewSectionInfo>
             {
                 Success = true,
-                Message = "Reference callout created successfully.",
-                Response = new ViewSectionInfo
-                {
-                    Id = viewSection.Id.IntegerValue,
-                    UniqueId = viewSection.UniqueId,
-                    Name = viewSection.Name,
-                    ViewType = viewSection.ViewType.ToString()
-                }
+                Message = "Reference callout created successfully."
             };
         }
         catch (System.Exception e)
@@ -99,4 +97,14 @@ public class CreateReferenceCalloutEventHandler : IExternalEventHandler, IWaitab
     {
         return _resetEvent.WaitOne(timeoutMilliseconds);
     }
+}
+public class ReferenceCalloutCreationInfo
+{
+    public long ParentViewId { get; set; }
+    public long ViewFamilyTypeId { get; set; }
+    public BoundingBoxXYZInfo SectionBox { get; set; }
+
+    // Add the missing CalloutPoint1 and CalloutPoint2 properties
+    public XYZ CalloutPoint1 { get; set; }
+    public XYZ CalloutPoint2 { get; set; }
 }

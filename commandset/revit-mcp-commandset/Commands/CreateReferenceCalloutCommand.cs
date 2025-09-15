@@ -27,6 +27,7 @@ using RevitMCPSDK.API.Base;
 using Newtonsoft.Json.Linq;
 using System;
 using RevitMCPCommandSet.Models.Views;
+using ReferenceCalloutCreationInfo = RevitMCPCommandSet.Services.ReferenceCalloutCreationInfo;
 
 namespace RevitMCPCommandSet.Commands;
 

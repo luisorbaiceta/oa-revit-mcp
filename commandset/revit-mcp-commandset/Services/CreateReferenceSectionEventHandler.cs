@@ -59,7 +59,12 @@ public class CreateReferenceSectionEventHandler : IExternalEventHandler, IWaitab
                 }
             };
 
-            var viewSection = ViewSection.CreateReferenceSection(doc, parentViewId, viewFamilyTypeId, sectionBox);
+            // Define the headPoint and tailPoint for the section
+            var headPoint = new XYZ(CreationInfo.HeadPoint.X, CreationInfo.HeadPoint.Y, CreationInfo.HeadPoint.Z);
+            var tailPoint = new XYZ(CreationInfo.TailPoint.X, CreationInfo.TailPoint.Y, CreationInfo.TailPoint.Z);
+
+            // Call the correct overload of CreateReferenceSection
+            ViewSection.CreateReferenceSection(doc, parentViewId, viewFamilyTypeId, headPoint, tailPoint);
 
             transaction.Commit();
 
@@ -69,10 +74,10 @@ public class CreateReferenceSectionEventHandler : IExternalEventHandler, IWaitab
                 Message = "Reference section created successfully.",
                 Response = new ViewSectionInfo
                 {
-                    Id = viewSection.Id.IntegerValue,
-                    UniqueId = viewSection.UniqueId,
-                    Name = viewSection.Name,
-                    ViewType = viewSection.ViewType.ToString()
+                    Id = parentViewId.IntegerValue,
+                    UniqueId = parentViewId.ToString(),
+                    Name = "Reference Section",
+                    ViewType = "Section"
                 }
             };
         }
@@ -99,4 +104,14 @@ public class CreateReferenceSectionEventHandler : IExternalEventHandler, IWaitab
     {
         return _resetEvent.WaitOne(timeoutMilliseconds);
     }
+}
+public class ReferenceSectionCreationInfo
+{
+    public long ParentViewId { get; set; }
+    public long ViewFamilyTypeId { get; set; }
+    public BoundingBoxXYZInfo SectionBox { get; set; }
+
+    // Add the missing properties
+    public XYZ HeadPoint { get; set; } // Represents the head point of the section
+    public XYZ TailPoint { get; set; } // Represents the tail point of the section
 }
