@@ -1,37 +1,41 @@
 import { z } from "zod";
-import { tool } from "@modelcontext/tool-runtime";
-import {
-  executeCommand,
-  Command,
-} from "../utils/executeCommand";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { withRevitConnection } from "../utils/ConnectionManager.js";
 
-const SetGlobalParameterValueSchema = z.object({
-  id: z.number().describe("The ID of the global parameter."),
-  value: z.any().describe("The new value for the global parameter."),
-});
-
-async function setGlobalParameterValue(
-  input: z.infer<typeof SetGlobalParameterValueSchema>
-): Promise<any> {
-  const command: Command = {
-    name: "SetGlobalParameterValue",
-    payload: {
-      id: input.id,
-      value: input.value,
+export function registerSetGlobalParameterValueTool(server: McpServer) {
+  server.tool(
+    "set_global_parameter_value",
+    "Sets the value of a global parameter.",
+    {
+      id: z.number().describe("The ID of the global parameter."),
+      value: z.any().describe("The new value for the global parameter."),
     },
-  };
+    async (args, extra) => {
+      try {
+        const response = await withRevitConnection(async (revitClient) => {
+          return await revitClient.sendCommand("set_global_parameter_value", args);
+        });
 
-  try {
-    const result = await executeCommand(command);
-    return result;
-  } catch (error: any) {
-    return { error: error.message };
-  }
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(response, null, 2),
+            },
+          ],
+        };
+      } catch (error) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Set global parameter value failed: ${
+                error instanceof Error ? error.message : String(error)
+              }`,
+            },
+          ],
+        };
+      }
+    }
+  );
 }
-
-export const set_global_parameter_value = tool(
-  "set_global_parameter_value",
-  "Sets the value of a global parameter.",
-  SetGlobalParameterValueSchema,
-  setGlobalParameterValue
-);

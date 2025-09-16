@@ -1,31 +1,38 @@
 import { z } from "zod";
-import { tool } from "@modelcontext/tool-runtime";
-import {
-  executeCommand,
-  Command,
-} from "../utils/executeCommand";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { withRevitConnection } from "../utils/ConnectionManager.js";
 
-const GetProjectParametersSchema = z.object({});
+export function registerGetProjectParametersTool(server: McpServer) {
+  server.tool(
+    "get_project_parameters",
+    "Retrieves all project parameters from the Revit model.",
+    {},
+    async (args, extra) => {
+      try {
+        const response = await withRevitConnection(async (revitClient) => {
+          return await revitClient.sendCommand("get_project_parameters", {});
+        });
 
-async function getProjectParameters(
-  input: z.infer<typeof GetProjectParametersSchema>
-): Promise<any> {
-  const command: Command = {
-    name: "GetProjectParameters",
-    payload: {},
-  };
-
-  try {
-    const result = await executeCommand(command);
-    return result;
-  } catch (error: any) {
-    return { error: error.message };
-  }
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(response, null, 2),
+            },
+          ],
+        };
+      } catch (error) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Get project parameters failed: ${
+                error instanceof Error ? error.message : String(error)
+              }`,
+            },
+          ],
+        };
+      }
+    }
+  );
 }
-
-export const get_project_parameters = tool(
-  "get_project_parameters",
-  "Retrieves all project parameters from the Revit model.",
-  GetProjectParametersSchema,
-  getProjectParameters
-);
