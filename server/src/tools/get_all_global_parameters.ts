@@ -1,31 +1,38 @@
 import { z } from "zod";
-import { tool } from "@modelcontext/tool-runtime";
-import {
-  executeCommand,
-  Command,
-} from "../utils/executeCommand";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { withRevitConnection } from "../utils/ConnectionManager.js";
 
-const GetAllGlobalParametersSchema = z.object({});
+export function registerGetAllGlobalParametersTool(server: McpServer) {
+  server.tool(
+    "get_all_global_parameters",
+    "Retrieves all global parameters from the Revit model.",
+    {},
+    async (args, extra) => {
+      try {
+        const response = await withRevitConnection(async (revitClient) => {
+          return await revitClient.sendCommand("get_all_global_parameters", {});
+        });
 
-async function getAllGlobalParameters(
-  input: z.infer<typeof GetAllGlobalParametersSchema>
-): Promise<any> {
-  const command: Command = {
-    name: "GetAllGlobalParameters",
-    payload: {},
-  };
-
-  try {
-    const result = await executeCommand(command);
-    return result;
-  } catch (error: any) {
-    return { error: error.message };
-  }
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(response, null, 2),
+            },
+          ],
+        };
+      } catch (error) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Get all global parameters failed: ${
+                error instanceof Error ? error.message : String(error)
+              }`,
+            },
+          ],
+        };
+      }
+    }
+  );
 }
-
-export const get_all_global_parameters = tool(
-  "get_all_global_parameters",
-  "Retrieves all global parameters from the Revit model.",
-  GetAllGlobalParametersSchema,
-  getAllGlobalParameters
-);

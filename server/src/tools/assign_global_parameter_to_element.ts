@@ -1,43 +1,46 @@
 import { z } from "zod";
-import { tool } from "@modelcontext/tool-runtime";
-import {
-  executeCommand,
-  Command,
-} from "../utils/executeCommand";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { withRevitConnection } from "../utils/ConnectionManager.js";
 
-const AssignGlobalParameterToElementSchema = z.object({
-  elementId: z.number().describe("The ID of the element."),
-  parameterName: z
-    .string()
-    .describe("The name of the parameter on the element."),
-  globalParameterId: z
-    .number()
-    .describe("The ID of the global parameter to associate with."),
-});
-
-async function assignGlobalParameterToElement(
-  input: z.infer<typeof AssignGlobalParameterToElementSchema>
-): Promise<any> {
-  const command: Command = {
-    name: "AssignGlobalParameterToElement",
-    payload: {
-      elementId: input.elementId,
-      parameterName: input.parameterName,
-      globalParameterId: input.globalParameterId,
+export function registerAssignGlobalParameterToElementTool(server: McpServer) {
+  server.tool(
+    "assign_global_parameter_to_element",
+    "Associates a parameter of an element with a global parameter.",
+    {
+      elementId: z.number().describe("The ID of the element."),
+      parameterName: z
+        .string()
+        .describe("The name of the parameter on the element."),
+      globalParameterId: z
+        .number()
+        .describe("The ID of the global parameter to associate with."),
     },
-  };
+    async (args, extra) => {
+      try {
+        const response = await withRevitConnection(async (revitClient) => {
+          return await revitClient.sendCommand("assign_global_parameter_to_element", args);
+        });
 
-  try {
-    const result = await executeCommand(command);
-    return result;
-  } catch (error: any) {
-    return { error: error.message };
-  }
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(response, null, 2),
+            },
+          ],
+        };
+      } catch (error) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Assign global parameter to element failed: ${
+                error instanceof Error ? error.message : String(error)
+              }`,
+            },
+          ],
+        };
+      }
+    }
+  );
 }
-
-export const assign_global_parameter_to_element = tool(
-  "assign_global_parameter_to_element",
-  "Associates a parameter of an element with a global parameter.",
-  AssignGlobalParameterToElementSchema,
-  assignGlobalParameterToElement
-);

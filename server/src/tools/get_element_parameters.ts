@@ -1,35 +1,40 @@
 import { z } from "zod";
-import { tool } from "@modelcontext/tool-runtime";
-import {
-  executeCommand,
-  Command,
-} from "../utils/executeCommand";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { withRevitConnection } from "../utils/ConnectionManager.js";
 
-const GetElementParametersSchema = z.object({
-  elementId: z.number().describe("The ID of the element."),
-});
-
-async function getElementParameters(
-  input: z.infer<typeof GetElementParametersSchema>
-): Promise<any> {
-  const command: Command = {
-    name: "GetElementParameters",
-    payload: {
-      elementId: input.elementId,
+export function registerGetElementParametersTool(server: McpServer) {
+  server.tool(
+    "get_element_parameters",
+    "Retrieves all parameters for a specified element in the Revit model.",
+    {
+      elementId: z.number().describe("The ID of the element."),
     },
-  };
+    async (args, extra) => {
+      try {
+        const response = await withRevitConnection(async (revitClient) => {
+          return await revitClient.sendCommand("get_element_parameters", args);
+        });
 
-  try {
-    const result = await executeCommand(command);
-    return result;
-  } catch (error: any) {
-    return { error: error.message };
-  }
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(response, null, 2),
+            },
+          ],
+        };
+      } catch (error) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Get element parameters failed: ${
+                error instanceof Error ? error.message : String(error)
+              }`,
+            },
+          ],
+        };
+      }
+    }
+  );
 }
-
-export const get_element_parameters = tool(
-  "get_element_parameters",
-  "Retrieves all parameters for a specified element in the Revit model.",
-  GetElementParametersSchema,
-  getElementParameters
-);
