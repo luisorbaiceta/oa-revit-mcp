@@ -117,6 +117,26 @@
       "commandName": "create_reference_callout",
       "description": "Create a reference callout",
       "assemblyPath": "RevitMCPCommandSet.dll"
+    },
+    {
+      "commandName": "get_element_parameters",
+      "description": "Get all parameters of an element",
+      "assemblyPath": "RevitMCPCommandSet.dll"
+    },
+    {
+      "commandName": "update_element_parameter",
+      "description": "Update a parameter of an element",
+      "assemblyPath": "RevitMCPCommandSet.dll"
+    },
+    {
+      "commandName": "get_project_parameters",
+      "description": "Get all project parameters",
+      "assemblyPath": "RevitMCPCommandSet.dll"
+    },
+    {
+      "commandName": "get_shared_parameters",
+      "description": "Get all shared parameters",
+      "assemblyPath": "RevitMCPCommandSet.dll"
     }
   ]
 }
