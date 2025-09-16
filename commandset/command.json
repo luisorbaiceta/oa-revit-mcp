@@ -37,6 +37,31 @@
       "commandName": "send_code_to_revit",
       "description": "Send C# code to Revit for execution. The code will be inserted into a template with access to the Revit Document and parameters. Your code should be written to work within the Execute method of the template.",
       "assemblyPath": "RevitMCPCommandSet.dll"
+    },
+    {
+      "commandName": "ai_element_filter",
+      "description": "Filter elements with AI",
+      "assemblyPath": "RevitMCPCommandSet.dll"
+    },
+    {
+      "commandName": "get_selected_elements",
+      "description": "Get selected elements",
+      "assemblyPath": "RevitMCPCommandSet.dll"
+    },
+    {
+      "commandName": "create_dimensions",
+      "description": "Create dimensions",
+      "assemblyPath": "RevitMCPCommandSet.dll"
+    },
+    {
+      "commandName": "operate_element",
+      "description": "Operate on elements",
+      "assemblyPath": "RevitMCPCommandSet.dll"
+    },
+    {
+      "commandName": "modify_element",
+      "description": "Modify an element",
+      "assemblyPath": "RevitMCPCommandSet.dll"
     }
   ]
 }
