@@ -2,21 +2,35 @@ import { z } from "zod";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { withRevitConnection } from "../utils/ConnectionManager.js";
 
-export function registerModifyElementTool(server: McpServer) {
+const JZPointSchema = z.object({
+  x: z.number(),
+  y: z.number(),
+  z: z.number(),
+});
+
+const DimensionCreationInfoSchema = z.object({
+  startPoint: JZPointSchema,
+  endPoint: JZPointSchema,
+  linePoint: JZPointSchema,
+  elementIds: z.array(z.number()),
+  dimensionType: z.string().optional(),
+  dimensionStyleId: z.number().optional(),
+  viewId: z.number().optional(),
+  options: z.record(z.any()).optional(),
+});
+
+export function registerCreateDimensionsTool(server: McpServer) {
   server.tool(
-    "modify_element",
-    "Modify an element's parameters.",
+    "create_dimensions",
+    "Create dimensions in a Revit view.",
     {
-      data: z.object({
-        elementId: z.number().describe("The ID of the element to modify."),
-        parameters: z.record(z.string()).describe("A dictionary of parameter names and their new values."),
-      }),
+      dimensions: z.array(DimensionCreationInfoSchema),
     },
     async (args, extra) => {
       const params = args;
       try {
         const response = await withRevitConnection(async (revitClient) => {
-          return await revitClient.sendCommand("modify_element", params);
+          return await revitClient.sendCommand("create_dimensions", params);
         });
 
         return {
@@ -32,7 +46,7 @@ export function registerModifyElementTool(server: McpServer) {
           content: [
             {
               type: "text",
-              text: `Element modification failed: ${
+              text: `Dimension creation failed: ${
                 error instanceof Error ? error.message : String(error)
               }`,
             },
