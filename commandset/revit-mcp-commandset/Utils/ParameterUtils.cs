@@ -112,5 +112,82 @@ namespace RevitMCPCommandSet.Utils
             }
             return parameterInfo;
         }
+
+        public static ElementId CreateGlobalParameter(Document doc, string name, ParameterType type, ForgeTypeId spec, bool isReporting)
+        {
+            if (!GlobalParametersManager.AreGlobalParametersAllowed(doc))
+                throw new InvalidOperationException("Global parameters are not permitted in the given document.");
+
+            if (!GlobalParametersManager.IsUniqueName(doc, name))
+                throw new ArgumentException("A global parameter with that name already exists.", nameof(name));
+
+            var gpDefinition = GlobalParameter.Create(doc, name, type, spec);
+            var gp = doc.GetElement(gpDefinition) as GlobalParameter;
+            gp.IsReporting = isReporting;
+
+            return gpDefinition;
+        }
+
+        public static List<GlobalParameterInfo> GetAllGlobalParameters(Document doc)
+        {
+            var gpIds = GlobalParametersManager.GetAllGlobalParameters(doc);
+            var gpList = new List<GlobalParameterInfo>();
+
+            foreach (var gpId in gpIds)
+            {
+                var gp = doc.GetElement(gpId) as GlobalParameter;
+                if (gp == null) continue;
+
+                var gpInfo = new GlobalParameterInfo
+                {
+                    Id = gp.Id.IntegerValue,
+                    Name = gp.Name,
+                    IsReporting = gp.IsReporting,
+                    Value = gp.GetValue()?.Value,
+                    Type = gp.GetDefinition().GetDataType().TypeId
+                };
+                gpList.Add(gpInfo);
+            }
+
+            return gpList;
+        }
+
+        public static void SetGlobalParameterValue(Document doc, ElementId id, object value)
+        {
+            var gp = doc.GetElement(id) as GlobalParameter;
+            if (gp == null)
+                throw new ArgumentException("Global parameter not found.", nameof(id));
+
+            var gpValue = new DoubleParameterValue();
+            if (value is double d)
+            {
+                gpValue.Value = d;
+            }
+            else if (value is int i)
+            {
+                gpValue.Value = i;
+            }
+            else
+            {
+                throw new ArgumentException("Unsupported value type for global parameter.");
+            }
+            gp.SetValue(gpValue);
+        }
+
+        public static void AssignGlobalParameterToElement(Document doc, ElementId elementId, string parameterName, ElementId globalParameterId)
+        {
+            var element = doc.GetElement(elementId);
+            if (element == null)
+                throw new ArgumentException("Element not found.", nameof(elementId));
+
+            var parameter = element.LookupParameter(parameterName);
+            if (parameter == null)
+                throw new ArgumentException("Parameter not found on element.", nameof(parameterName));
+
+            if (!parameter.CanBeAssociatedWithGlobalParameter())
+                throw new InvalidOperationException("This parameter cannot be associated with a global parameter.");
+
+            parameter.AssociateWithGlobalParameter(globalParameterId);
+        }
     }
 }
