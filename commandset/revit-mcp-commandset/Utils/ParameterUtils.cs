@@ -47,13 +47,13 @@ namespace RevitMCPCommandSet.Utils
             it.Reset();
             while (it.MoveNext())
             {
-                var definition = it.Key as InternalDefinition;
+                var definition = it.Key as Definition;
                 if (definition == null) continue;
                 projectParameters.Add(new ParameterInfo
                 {
                     Name = definition.Name,
-                    Group = definition.get_ParameterGroup(doc.Application.ActiveUIDocument.Document.DisplayUnitSystem).ToString(),
-                    Unit = definition.GetUnitTypeId().TypeId,
+                    Group = definition.GetGroupTypeId().ToString(),
+                    Unit = definition.GetType().ToString(),
                     IsReadOnly = false // Project parameters are generally not read-only by definition
                 });
             }
@@ -68,13 +68,13 @@ namespace RevitMCPCommandSet.Utils
             it.Reset();
             while (it.MoveNext())
             {
-                if (it.Key is ExternalDefinition definition)
+                if (it.Key is Definition definition)
                 {
                     sharedParameters.Add(new ParameterInfo
                     {
                         Name = definition.Name,
-                        Group = definition.get_ParameterGroup(doc.Application.ActiveUIDocument.Document.DisplayUnitSystem).ToString(),
-                        Unit = definition.GetUnitTypeId().TypeId,
+                        Group = definition.GetGroupTypeId().ToString(),
+                        Unit = definition.GetType().ToString(),
                         IsReadOnly = false
                     });
                 }
@@ -88,14 +88,14 @@ namespace RevitMCPCommandSet.Utils
             {
                 Name = parameter.Definition.Name,
                 IsReadOnly = parameter.IsReadOnly,
-                Group = parameter.Definition.get_ParameterGroup(parameter.Element.Document.Application.ActiveUIDocument.Document.DisplayUnitSystem).ToString()
+                Group = parameter.Definition.GetGroupTypeId().ToString(),
+                Unit = parameter.Definition.GetType().ToString()
             };
 
             switch (parameter.StorageType)
             {
                 case StorageType.Double:
                     parameterInfo.Value = parameter.AsDouble();
-                    parameterInfo.Unit = parameter.GetUnitTypeId()?.TypeId;
                     break;
                 case StorageType.Integer:
                     parameterInfo.Value = parameter.AsInteger();
@@ -113,7 +113,7 @@ namespace RevitMCPCommandSet.Utils
             return parameterInfo;
         }
 
-        public static ElementId CreateGlobalParameter(Document doc, string name, ParameterType type, ForgeTypeId spec, bool isReporting)
+        public static ElementId CreateGlobalParameter(Document doc, string name, ForgeTypeId spec, bool isReporting)
         {
             if (!GlobalParametersManager.AreGlobalParametersAllowed(doc))
                 throw new InvalidOperationException("Global parameters are not permitted in the given document.");
@@ -121,11 +121,11 @@ namespace RevitMCPCommandSet.Utils
             if (!GlobalParametersManager.IsUniqueName(doc, name))
                 throw new ArgumentException("A global parameter with that name already exists.", nameof(name));
 
-            var gpDefinition = GlobalParameter.Create(doc, name, type, spec);
-            var gp = doc.GetElement(gpDefinition) as GlobalParameter;
+            var gpDefinition = GlobalParameter.Create(doc, name, spec);
+            var gp = doc.GetElement(gpDefinition.Id) as GlobalParameter;
             gp.IsReporting = isReporting;
 
-            return gpDefinition;
+            return gpDefinition.Id;
         }
 
         public static List<GlobalParameterInfo> GetAllGlobalParameters(Document doc)
@@ -143,7 +143,7 @@ namespace RevitMCPCommandSet.Utils
                     Id = gp.Id.IntegerValue,
                     Name = gp.Name,
                     IsReporting = gp.IsReporting,
-                    Value = gp.GetValue()?.Value,
+                    Value = gp.GetValue(),
                     Type = gp.GetDefinition().GetDataType().TypeId
                 };
                 gpList.Add(gpInfo);
@@ -184,7 +184,7 @@ namespace RevitMCPCommandSet.Utils
             if (parameter == null)
                 throw new ArgumentException("Parameter not found on element.", nameof(parameterName));
 
-            if (!parameter.CanBeAssociatedWithGlobalParameter())
+            if (!parameter.CanBeAssociatedWithGlobalParameter(globalParameterId))
                 throw new InvalidOperationException("This parameter cannot be associated with a global parameter.");
 
             parameter.AssociateWithGlobalParameter(globalParameterId);

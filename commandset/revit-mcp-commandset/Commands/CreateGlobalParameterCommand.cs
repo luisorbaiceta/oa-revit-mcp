@@ -21,13 +21,11 @@ namespace RevitMCPCommandSet.Commands
             try
             {
                 var name = parameters["name"].ToObject<string>();
-                var type = (ParameterType)Enum.Parse(typeof(ParameterType), parameters["type"].ToObject<string>());
                 var spec = new ForgeTypeId(parameters["spec"].ToObject<string>());
                 var isReporting = parameters["isReporting"].ToObject<bool>();
 
                 var handler = (CreateGlobalParameterEventHandler)Handler;
                 handler.Name = name;
-                handler.Type = type;
                 handler.Spec = spec;
                 handler.IsReporting = isReporting;
 

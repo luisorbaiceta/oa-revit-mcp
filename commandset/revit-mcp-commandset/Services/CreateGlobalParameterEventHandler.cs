@@ -5,6 +5,7 @@ using RevitMCPCommandSet.Models.Common;
 using RevitMCPCommandSet.Utils;
 using System;
 using System.Threading;
+using ParameterUtils = RevitMCPCommandSet.Utils.ParameterUtils;
 
 namespace RevitMCPCommandSet.Services
 {
@@ -12,7 +13,6 @@ namespace RevitMCPCommandSet.Services
     {
         private readonly ManualResetEvent _resetEvent = new ManualResetEvent(false);
         public string Name { get; set; }
-        public ParameterType Type { get; set; }
         public ForgeTypeId Spec { get; set; }
         public bool IsReporting { get; set; }
         public AIResult<int> Result { get; private set; }
@@ -25,9 +25,9 @@ namespace RevitMCPCommandSet.Services
                 using (var trans = new Transaction(doc, "Create Global Parameter"))
                 {
                     trans.Start();
-                    var id = ParameterUtils.CreateGlobalParameter(doc, Name, Type, Spec, IsReporting);
+                    var id = ParameterUtils.CreateGlobalParameter(doc, Name, Spec, IsReporting);
                     trans.Commit();
-                    Result = new AIResult<int> { Success = true, Data = id.IntegerValue };
+                    Result = new AIResult<int> { Success = true, Response = id.IntegerValue };
                 }
             }
             catch (Exception ex)

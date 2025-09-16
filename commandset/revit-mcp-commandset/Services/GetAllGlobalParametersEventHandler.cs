@@ -6,6 +6,7 @@ using RevitMCPCommandSet.Utils;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using ParameterUtils = RevitMCPCommandSet.Utils.ParameterUtils;
 
 namespace RevitMCPCommandSet.Services
 {
@@ -20,7 +21,7 @@ namespace RevitMCPCommandSet.Services
             {
                 var doc = uiapp.ActiveUIDocument.Document;
                 var parameters = ParameterUtils.GetAllGlobalParameters(doc);
-                Result = new AIResult<List<GlobalParameterInfo>> { Success = true, Data = parameters };
+                Result = new AIResult<List<GlobalParameterInfo>> { Success = true, Response = parameters };
             }
             catch (Exception ex)
             {

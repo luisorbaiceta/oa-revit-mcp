@@ -6,25 +6,35 @@ using RevitMCPCommandSet.Utils;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using ParameterUtils = RevitMCPCommandSet.Utils.ParameterUtils;
 
 namespace RevitMCPCommandSet.Services
 {
     public class GetSharedParametersEventHandler : IExternalEventHandler, IWaitableExternalEventHandler
     {
         private readonly ManualResetEvent _resetEvent = new ManualResetEvent(false);
-        public AIResult<List<ParameterInfo>> Result { get; private set; }
+        public AIResult<List<RevitMCPCommandSet.Models.Common.ParameterInfo>> Result { get; private set; }
 
         public void Execute(UIApplication uiapp)
         {
             try
             {
                 var doc = uiapp.ActiveUIDocument.Document;
-                var parameters = ParameterUtils.GetAllSharedParameters(doc);
-                Result = new AIResult<List<ParameterInfo>> { Success = true, Data = parameters };
+                var parameters = ParameterUtils.GetAllSharedParameters(doc)
+                    .Select(p => new RevitMCPCommandSet.Models.Common.ParameterInfo
+                    {
+                        Name = p.Name,
+                        Value = p.Value.ToString(),
+                        IsReadOnly = p.IsReadOnly,
+                        Group = p.Group,
+                        Unit = p.Unit
+                    }).ToList();
+
+                Result = new AIResult<List<RevitMCPCommandSet.Models.Common.ParameterInfo>> { Success = true, Response = parameters };
             }
             catch (Exception ex)
             {
-                Result = new AIResult<List<ParameterInfo>> { Success = false, Message = ex.Message };
+                Result = new AIResult<List<RevitMCPCommandSet.Models.Common.ParameterInfo>> { Success = false, Message = ex.Message };
             }
             finally
             {

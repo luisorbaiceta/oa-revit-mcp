@@ -6,6 +6,7 @@ using RevitMCPCommandSet.Utils;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using ParameterUtils = RevitMCPCommandSet.Utils.ParameterUtils;
 
 namespace RevitMCPCommandSet.Services
 {
@@ -13,7 +14,7 @@ namespace RevitMCPCommandSet.Services
     {
         private readonly ManualResetEvent _resetEvent = new ManualResetEvent(false);
         public int ElementId { get; set; }
-        public AIResult<List<ParameterInfo>> Result { get; private set; }
+        public AIResult<List<Models.Common.ParameterInfo>> Result { get; private set; } // Updated to use the correct namespace
 
         public void Execute(UIApplication uiapp)
         {
@@ -27,11 +28,11 @@ namespace RevitMCPCommandSet.Services
                 }
 
                 var parameters = ParameterUtils.GetAllParameters(element);
-                Result = new AIResult<List<ParameterInfo>> { Success = true, Data = parameters };
+                Result = new AIResult<List<Models.Common.ParameterInfo>> { Success = true, Response = parameters }; // Updated to use the correct namespace
             }
             catch (Exception ex)
             {
-                Result = new AIResult<List<ParameterInfo>> { Success = false, Message = ex.Message };
+                Result = new AIResult<List<Models.Common.ParameterInfo>> { Success = false, Message = ex.Message }; // Updated to use the correct namespace
             }
             finally
             {

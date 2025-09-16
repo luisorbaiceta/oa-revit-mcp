@@ -6,13 +6,14 @@ using RevitMCPCommandSet.Utils;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using ParameterUtils = RevitMCPCommandSet.Utils.ParameterUtils;
 
 namespace RevitMCPCommandSet.Services
 {
     public class GetProjectParametersEventHandler : IExternalEventHandler, IWaitableExternalEventHandler
     {
         private readonly ManualResetEvent _resetEvent = new ManualResetEvent(false);
-        public AIResult<List<ParameterInfo>> Result { get; private set; }
+        public AIResult<List<RevitMCPCommandSet.Models.Common.ParameterInfo>> Result { get; private set; }
 
         public void Execute(UIApplication uiapp)
         {
@@ -20,11 +21,11 @@ namespace RevitMCPCommandSet.Services
             {
                 var doc = uiapp.ActiveUIDocument.Document;
                 var parameters = ParameterUtils.GetAllProjectParameters(doc);
-                Result = new AIResult<List<ParameterInfo>> { Success = true, Data = parameters };
+                Result = new AIResult<List<RevitMCPCommandSet.Models.Common.ParameterInfo>> { Success = true, Response = parameters };
             }
             catch (Exception ex)
             {
-                Result = new AIResult<List<ParameterInfo>> { Success = false, Message = ex.Message };
+                Result = new AIResult<List<RevitMCPCommandSet.Models.Common.ParameterInfo>> { Success = false, Message = ex.Message };
             }
             finally
             {
