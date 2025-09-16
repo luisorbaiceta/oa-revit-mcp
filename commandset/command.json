@@ -9,11 +9,6 @@
   },
   "commands": [
     {
-      "commandName": "say_hello",
-      "description": "Displays a greeting dialog",
-      "assemblyPath": "RevitMCPCommandSet.dll"
-    },
-    {
       "commandName": "get_available_family_types",
       "description": "get available family types",
       "assemblyPath": "RevitMCPCommandSet.dll"
@@ -29,133 +24,18 @@
       "assemblyPath": "RevitMCPCommandSet.dll"
     },
     {
-      "commandName": "create_Wall",
-      "description": "create a wall",
-      "assemblyPath": "RevitMCPCommandSet.dll"
-    },
-    {
       "commandName": "delete_element",
       "description": "Deletes elements using ElementId",
       "assemblyPath": "RevitMCPCommandSet.dll"
     },
-	{
+    {
       "commandName": "tag_all_walls",
       "description": "Tag all the walls in the model",
       "assemblyPath": "RevitMCPCommandSet.dll"
     },
-	{
-      "commandName": "create_line_based_element",
-      "description": "Create line based element such as wall",
-      "assemblyPath": "RevitMCPCommandSet.dll"
-    },
     {
-      "commandName": "create_keynote_legend",
-      "description": "Create a keynote legend",
-      "assemblyPath": "RevitMCPCommandSet.dll"
-    },
-    {
-      "commandName": "create_note_block",
-      "description": "Create a note block",
-      "assemblyPath": "RevitMCPCommandSet.dll"
-    },
-    {
-      "commandName": "create_revision_schedule",
-      "description": "Create a revision schedule",
-      "assemblyPath": "RevitMCPCommandSet.dll"
-    },
-    {
-      "commandName": "create_view_list",
-      "description": "Create a view list",
-      "assemblyPath": "RevitMCPCommandSet.dll"
-    },
-    {
-      "commandName": "create_sheet_list",
-      "description": "Create a sheet list",
-      "assemblyPath": "RevitMCPCommandSet.dll"
-    },
-    {
-      "commandName": "create_isometric_view",
-      "description": "Create an isometric view",
-      "assemblyPath": "RevitMCPCommandSet.dll"
-    },
-    {
-      "commandName": "create_perspective_view",
-      "description": "Create a perspective view",
-      "assemblyPath": "RevitMCPCommandSet.dll"
-    },
-    {
-      "commandName": "create_drafting_view",
-      "description": "Create a drafting view",
-      "assemblyPath": "RevitMCPCommandSet.dll"
-    },
-    {
-      "commandName": "create_plan_view",
-      "description": "Create a plan view",
-      "assemblyPath": "RevitMCPCommandSet.dll"
-    },
-    {
-      "commandName": "create_area_plan",
-      "description": "Create an area plan",
-      "assemblyPath": "RevitMCPCommandSet.dll"
-    },
-    {
-      "commandName": "create_section_view",
-      "description": "Create a section view",
-      "assemblyPath": "RevitMCPCommandSet.dll"
-    },
-    {
-      "commandName": "create_detail_view",
-      "description": "Create a detail view",
-      "assemblyPath": "RevitMCPCommandSet.dll"
-    },
-    {
-      "commandName": "create_reference_section",
-      "description": "Create a reference section",
-      "assemblyPath": "RevitMCPCommandSet.dll"
-    },
-    {
-      "commandName": "create_reference_callout",
-      "description": "Create a reference callout",
-      "assemblyPath": "RevitMCPCommandSet.dll"
-    },
-    {
-      "commandName": "get_element_parameters",
-      "description": "Get all parameters of an element",
-      "assemblyPath": "RevitMCPCommandSet.dll"
-    },
-    {
-      "commandName": "update_element_parameter",
-      "description": "Update a parameter of an element",
-      "assemblyPath": "RevitMCPCommandSet.dll"
-    },
-    {
-      "commandName": "get_project_parameters",
-      "description": "Get all project parameters",
-      "assemblyPath": "RevitMCPCommandSet.dll"
-    },
-    {
-      "commandName": "get_shared_parameters",
-      "description": "Get all shared parameters",
-      "assemblyPath": "RevitMCPCommandSet.dll"
-    },
-    {
-      "commandName": "create_global_parameter",
-      "description": "Create a global parameter",
-      "assemblyPath": "RevitMCPCommandSet.dll"
-    },
-    {
-      "commandName": "get_all_global_parameters",
-      "description": "Get all global parameters",
-      "assemblyPath": "RevitMCPCommandSet.dll"
-    },
-    {
-      "commandName": "set_global_parameter_value",
-      "description": "Set the value of a global parameter",
-      "assemblyPath": "RevitMCPCommandSet.dll"
-    },
-    {
-      "commandName": "assign_global_parameter_to_element",
-      "description": "Assign a global parameter to an element's parameter",
+      "commandName": "send_code_to_revit",
+      "description": "Send C# code to Revit for execution. The code will be inserted into a template with access to the Revit Document and parameters. Your code should be written to work within the Execute method of the template.",
       "assemblyPath": "RevitMCPCommandSet.dll"
     }
   ]
