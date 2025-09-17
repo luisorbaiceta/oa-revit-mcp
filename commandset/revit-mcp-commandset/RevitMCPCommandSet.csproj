@@ -62,9 +62,9 @@
     <Target Name="GenerateCode" BeforeTargets="BeforeBuild">
         <PropertyGroup>
             <CodeGenExe>$(SolutionDir)../tools/CodeGen/bin/Debug/net6.0/CodeGen.exe</CodeGenExe>
-            <CommandJson>$(SolutionDir)../command.json</CommandJson>
-            <CSharpOutputDir>$(ProjectDir)Services/Generated/</CSharpOutputDir>
-            <ServerOutputDir>$(SolutionDir)../server/src/tools/generated/</ServerOutputDir>
+            <CommandJson>$(SolutionDir)../commandset/command.json</CommandJson>
+            <CSharpOutputDir>$(ProjectDir)Services/</CSharpOutputDir>
+            <ServerOutputDir>$(SolutionDir)../server/src/tools/</ServerOutputDir>
         </PropertyGroup>
         <Exec Command="&quot;$(CodeGenExe)&quot; &quot;$(CommandJson)&quot; &quot;$(CSharpOutputDir)&quot; &quot;$(ServerOutputDir)&quot;" />
     </Target>
