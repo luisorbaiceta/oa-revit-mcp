@@ -8,48 +8,33 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace RevitMCPCommandSet.Services
+using Newtonsoft.Json.Linq;
+using RevitMCPCommandSet.Utils;
+
+namespace RevitMCPCommandSet.Services.Generated
 {
     public class OperateElementEventHandler : IExternalEventHandler, IWaitableExternalEventHandler
     {
-        private UIApplication uiApp;
-        private UIDocument uiDoc => uiApp.ActiveUIDocument;
-        private Document doc => uiDoc.Document;
-        private Autodesk.Revit.ApplicationServices.Application app => uiApp.Application;
+        public object Result { get; private set; }
+        public bool TaskCompleted { get; private set; }
+        private readonly System.Threading.ManualResetEvent _resetEvent = new System.Threading.ManualResetEvent(false);
 
-        /// <summary>
-        /// 事件等待对象
-        /// </summary>
-        private readonly ManualResetEvent _resetEvent = new ManualResetEvent(false);
-        /// <summary>
-        /// 创建数据（传入数据）
-        /// </summary>
-        public OperationSetting OperationData { get; private set; }
-        /// <summary>
-        /// 执行结果（传出数据）
-        /// </summary>
-        public AIResult<string> Result { get; private set; }
+        private OperationSetting _operationData;
 
-        /// <summary>
-        /// 设置创建的参数
-        /// </summary>
-        public void SetParameters(OperationSetting data)
+        public void SetParameters(JObject parameters)
         {
-            OperationData = data;
-            _resetEvent.Reset();
+            _operationData = parameters.ToObject<OperationSetting>();
         }
+
         public void Execute(UIApplication uiapp)
         {
-            uiApp = uiapp;
-
             try
             {
-                bool result = ExecuteElementOperation(uiDoc, OperationData);
-
+                bool result = OperateElementUtils.ExecuteElementOperation(uiapp.ActiveUIDocument, _operationData);
                 Result = new AIResult<string>
                 {
                     Success = true,
-                    Message = $"成功执行操作",
+                    Message = "Successfully executed operation"
                 };
             }
             catch (Exception ex)
@@ -57,31 +42,24 @@ namespace RevitMCPCommandSet.Services
                 Result = new AIResult<string>
                 {
                     Success = false,
-                    Message = $"操作元素时出错: {ex.Message}",
+                    Message = $"Error operating on element: {ex.Message}"
                 };
             }
             finally
             {
-                _resetEvent.Set(); // 通知等待线程操作已完成
+                TaskCompleted = true;
+                _resetEvent.Set();
             }
         }
 
-        /// <summary>
-        /// 等待创建完成
-        /// </summary>
-        /// <param name="timeoutMilliseconds">超时时间（毫秒）</param>
-        /// <returns>操作是否在超时前完成</returns>
-        public bool WaitForCompletion(int timeoutMilliseconds = 10000)
+        public bool WaitForCompletion(int timeoutMilliseconds = 15000)
         {
             return _resetEvent.WaitOne(timeoutMilliseconds);
         }
 
-        /// <summary>
-        /// IExternalEventHandler.GetName 实现
-        /// </summary>
         public string GetName()
         {
-            return "操作元素";
+            return "operate_element";
         }
 
         /// <summary>

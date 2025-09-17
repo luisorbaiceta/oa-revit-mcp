@@ -1,30 +1,24 @@
 ﻿using Autodesk.Revit.UI;
+using Newtonsoft.Json.Linq;
 using RevitMCPCommandSet.Models.Common;
 using RevitMCPSDK.API.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace RevitMCPCommandSet.Services
+namespace RevitMCPCommandSet.Services.Generated
 {
     public class GetSelectedElementsEventHandler : IExternalEventHandler, IWaitableExternalEventHandler
     {
-        // 执行结果
-        public List<Models.Common.ElementInfo> ResultElements { get; private set; }
-
-        // 状态同步对象
+        public object Result { get; private set; }
         public bool TaskCompleted { get; private set; }
-        private readonly ManualResetEvent _resetEvent = new ManualResetEvent(false);
+        private readonly System.Threading.ManualResetEvent _resetEvent = new System.Threading.ManualResetEvent(false);
 
-        // 限制返回的元素数量
-        public int? Limit { get; set; }
+        private int? _limit;
 
-        // 实现IWaitableExternalEventHandler接口
-        public bool WaitForCompletion(int timeoutMilliseconds = 10000)
+        public void SetParameters(JObject parameters)
         {
-            return _resetEvent.WaitOne(timeoutMilliseconds);
+            _limit = parameters["limit"]?.Value<int?>();
         }
 
         public void Execute(UIApplication app)
@@ -34,24 +28,17 @@ namespace RevitMCPCommandSet.Services
                 var uiDoc = app.ActiveUIDocument;
                 var doc = uiDoc.Document;
 
-                // 获取当前选中的元素
                 var selectedIds = uiDoc.Selection.GetElementIds();
                 var selectedElements = selectedIds.Select(id => doc.GetElement(id)).ToList();
 
-                // 应用数量限制
-                if (Limit.HasValue && Limit.Value > 0)
+                if (_limit.HasValue && _limit.Value > 0)
                 {
-                    selectedElements = selectedElements.Take(Limit.Value).ToList();
+                    selectedElements = selectedElements.Take(_limit.Value).ToList();
                 }
 
-                // 转换为ElementInfo列表
-                ResultElements = selectedElements.Select(element => new ElementInfo
+                Result = selectedElements.Select(element => new ElementInfo
                 {
-#if REVIT2024_OR_GREATER
                     Id = element.Id.Value,
-#else
-                    Id = element.Id.IntegerValue,
-#endif
                     UniqueId = element.UniqueId,
                     Name = element.Name,
                     Category = element.Category?.Name
@@ -59,8 +46,8 @@ namespace RevitMCPCommandSet.Services
             }
             catch (Exception ex)
             {
-                TaskDialog.Show("Error", "获取选中元素失败: " + ex.Message);
-                ResultElements = new List<Models.Common.ElementInfo>();
+                System.Diagnostics.Debug.WriteLine(ex.ToString());
+                Result = new List<ElementInfo>();
             }
             finally
             {
@@ -71,7 +58,12 @@ namespace RevitMCPCommandSet.Services
 
         public string GetName()
         {
-            return "获取选中元素";
+            return "get_selected_elements";
+        }
+
+        public bool WaitForCompletion(int timeoutMilliseconds = 15000)
+        {
+            return _resetEvent.WaitOne(timeoutMilliseconds);
         }
     }
 }

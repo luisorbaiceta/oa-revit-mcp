@@ -1,23 +1,15 @@
 ﻿using Autodesk.Revit.UI;
 using RevitMCPCommandSet.Models.Common;
 using RevitMCPSDK.API.Interfaces;
+using System;
 
-namespace RevitMCPCommandSet.Services
+namespace RevitMCPCommandSet.Services.Generated
 {
     public class GetCurrentViewInfoEventHandler : IExternalEventHandler, IWaitableExternalEventHandler
     {
-        // 执行结果
-        public ViewInfo ResultInfo { get; private set; }
-
-        // 状态同步对象
+        public object Result { get; private set; }
         public bool TaskCompleted { get; private set; }
-        private readonly ManualResetEvent _resetEvent = new ManualResetEvent(false);
-
-        // 实现IWaitableExternalEventHandler接口
-        public bool WaitForCompletion(int timeoutMilliseconds = 10000)
-        {
-            return _resetEvent.WaitOne(timeoutMilliseconds);
-        }
+        private readonly System.Threading.ManualResetEvent _resetEvent = new System.Threading.ManualResetEvent(false);
 
         public void Execute(UIApplication app)
         {
@@ -27,13 +19,9 @@ namespace RevitMCPCommandSet.Services
                 var doc = uiDoc.Document;
                 var activeView = doc.ActiveView;
 
-                ResultInfo = new ViewInfo
+                Result = new ViewInfo
                 {
-#if REVIT2024_OR_GREATER
                     Id = (int)activeView.Id.Value,
-#else
-                    Id = activeView.Id.IntegerValue,
-#endif
                     UniqueId = activeView.UniqueId,
                     Name = activeView.Name,
                     ViewType = activeView.ViewType.ToString(),
@@ -44,7 +32,7 @@ namespace RevitMCPCommandSet.Services
             }
             catch (Exception ex)
             {
-                TaskDialog.Show("error", "获取信息失败");
+                System.Diagnostics.Debug.WriteLine(ex.ToString());
             }
             finally
             {
@@ -55,7 +43,12 @@ namespace RevitMCPCommandSet.Services
 
         public string GetName()
         {
-            return "获取当前视图信息";
+            return "get_current_view_info";
+        }
+
+        public bool WaitForCompletion(int timeoutMilliseconds = 15000)
+        {
+            return _resetEvent.WaitOne(timeoutMilliseconds);
         }
     }
 }

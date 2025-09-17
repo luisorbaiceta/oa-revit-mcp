@@ -59,4 +59,14 @@
       <Exec Command="xcopy /y &quot;$(TargetDir)*.dll&quot; &quot;$(AppData)\Autodesk\Revit\Addins\$(RevitVersion)\Commands\RevitMCPCommandSet\$(RevitVersion)&quot;&#xD;&#xA;xcopy /y &quot;$(TargetDir)*.pdb&quot; &quot;$(AppData)\Autodesk\Revit\Addins\$(RevitVersion)\Commands\RevitMCPCommandSet\$(RevitVersion)&quot;" />
     </Target>
 
+    <Target Name="GenerateCode" BeforeTargets="BeforeBuild">
+        <PropertyGroup>
+            <CodeGenExe>$(SolutionDir)../tools/CodeGen/bin/Debug/net6.0/CodeGen.exe</CodeGenExe>
+            <CommandJson>$(SolutionDir)../command.json</CommandJson>
+            <CSharpOutputDir>$(ProjectDir)Services/Generated/</CSharpOutputDir>
+            <ServerOutputDir>$(SolutionDir)../server/src/tools/generated/</ServerOutputDir>
+        </PropertyGroup>
+        <Exec Command="&quot;$(CodeGenExe)&quot; &quot;$(CommandJson)&quot; &quot;$(CSharpOutputDir)&quot; &quot;$(ServerOutputDir)&quot;" />
+    </Target>
+
 </Project>

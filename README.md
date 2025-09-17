@@ -122,9 +122,39 @@ The AI will use the available tools to execute your commands in Revit.
 
 ## Custom Commands
 
-You can extend the functionality of Revit-MCP by creating your own custom commands. To do this, you can refer to the `revit-mcp-commandset` project as a template.
+You can extend the functionality of Revit-MCP by creating your own custom commands. The process has been streamlined to minimize boilerplate and manual configuration.
 
-When creating custom commands, make sure that the command names are identical between the `revit-mcp` server and the `revit-mcp-commandset` project. This will ensure that the AI can find and execute your custom commands correctly.
+### Adding a New Command
+
+To add a new command, you only need to do one thing:
+
+1.  **Add an entry to `commandset/command.json`:**
+
+    Open the `command.json` file and add a new entry for your command. For example:
+
+    ```json
+    {
+      "commandName": "my_new_command",
+      "description": "This is my new custom command.",
+      "assemblyPath": "RevitMCPCommandSet.dll"
+    }
+    ```
+
+That's it! The build process will automatically generate the necessary C# and TypeScript files for you.
+
+### How it Works
+
+The magic happens in the pre-build step of the `revit-mcp-commandset` project. A code generation tool (`tools/CodeGen`) reads the `command.json` file and generates the following files:
+
+-   **C# Event Handler:** A new C# class that implements `IExternalEventHandler` is generated in the `commandset/revit-mcp-commandset/Services/Generated` directory. This class will have a placeholder for your business logic.
+-   **TypeScript Tool:** A new TypeScript file is generated in the `server/src/tools/generated` directory. This file defines the server-side tool that the AI will use.
+
+You will still need to implement the business logic for your command in the generated C# event handler. The generated file will have a `// TODO:` comment to guide you.
+
+### Important Notes
+
+-   **Do not edit the generated files directly.** If you need to make changes to the command's definition, edit the `command.json` file and rebuild the `revit-mcp-commandset` project.
+-   The code generation tool will not overwrite existing files. If you want to regenerate a file, you must delete it first.
 
 ## Supported Tools
 

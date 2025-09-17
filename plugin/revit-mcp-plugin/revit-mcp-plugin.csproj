@@ -67,6 +67,9 @@
         <PackageReference Include="Newtonsoft.Json" Version="13.0.3"/>
     </ItemGroup>
     <ItemGroup>
+        <ProjectReference Include="..\..\commandset\revit-mcp-commandset\RevitMCPCommandSet.csproj" />
+    </ItemGroup>
+    <ItemGroup>
         <None Update="revit-mcp.addin">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
