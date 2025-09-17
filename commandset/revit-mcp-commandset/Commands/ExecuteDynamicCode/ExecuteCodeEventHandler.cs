@@ -1,4 +1,6 @@
 ﻿using System.CodeDom.Compiler;
+using System.Reflection;
+using Autodesk.Revit.Exceptions;
 using Autodesk.Revit.UI;
 using Microsoft.CSharp;
 using Newtonsoft.Json;
@@ -130,7 +132,17 @@ namespace AIGeneratedCode
                 var executorType = assembly.GetType("AIGeneratedCode.CodeExecutor");
                 var executeMethod = executorType.GetMethod("Execute");
 
-                return executeMethod.Invoke(null, new object[] { doc, parameters });
+                try
+                {
+                    return executeMethod.Invoke(null, new object[] { doc, parameters });
+                }
+                catch (TargetInvocationException ex) when (ex.InnerException is InvalidOperationException)
+                {
+                    throw new InvalidOperationException(
+                        "对Revit文档的UI相关操作 (如 TaskDialog.Show) 失败。这通常发生于在非UI线程中执行UI操作。请修改您的代码，移除UI相关的调用。",
+                        ex.InnerException
+                    );
+                }
             }
         }
 
