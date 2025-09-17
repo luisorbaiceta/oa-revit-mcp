@@ -5,12 +5,12 @@ import { withRevitConnection } from "../utils/ConnectionManager.js";
 export function registerSendCodeToRevitTool(server: McpServer) {
   server.tool(
     "send_code_to_revit",
-    "Send C# code to Revit for execution. The code will be inserted into a template with access to the Revit Document and parameters. Your code should be written to work within the Execute method of the template.",
+    "Executes a C# code snippet within the Revit application. Your code will be placed inside a method where you have access to a 'doc' variable (the active Revit Document) and a 'parameters' variable (an object[]). You must return a value from your script; this value will be serialized and sent back as the result. IMPORTANT: Do not use any UI-related APIs like 'TaskDialog.Show()' as they will fail in the execution context. The code has access to RevitAPI.dll and RevitAPIUI.dll.",
     {
       code: z
         .string()
         .describe(
-          "The C# code to execute in Revit. This code will be inserted into the Execute method of a template with access to Document and parameters."
+          "The C# code to execute. Example: 'return doc.Title;'. This code will be inserted into a method with access to a 'doc' (Document) and 'parameters' (object[]) variable."
         ),
       parameters: z
         .array(z.any())
