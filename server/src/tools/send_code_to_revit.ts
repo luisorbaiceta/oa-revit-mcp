@@ -6,9 +6,9 @@ export function registerSendCodeToRevitTool(server: McpServer) {
   server.tool(
     "send_code_to_revit",
     "Send C# code to Revit for execution. The code will be inserted into a template with access to the Revit Document and parameters. Your code should be written to work within the Execute method of the template.",
-    {
-      // TODO: Define your Zod schema for the arguments here
-    },
+    z.object({
+      code: z.string().describe("The C# code to execute in Revit."),
+    }),
     async (args, extra) => {
       try {
         const response = await withRevitConnection(async (revitClient) => {

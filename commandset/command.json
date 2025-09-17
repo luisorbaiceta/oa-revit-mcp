@@ -11,7 +11,15 @@
     {
       "commandName": "send_code_to_revit",
       "description": "Send C# code to Revit for execution. The code will be inserted into a template with access to the Revit Document and parameters. Your code should be written to work within the Execute method of the template.",
-      "assemblyPath": "RevitMCPCommandSet.dll"
+      "assemblyPath": "RevitMCPCommandSet.dll",
+      "type": "adhoc"
     },
+    {
+      "commandName": "hello_world",
+      "description": "A simple command that shows a 'Hello World' dialog in Revit.",
+      "assemblyPath": "RevitMCPCommandSet.dll",
+      "type": "script",
+      "scriptPath": "Commands/Scripts/HelloWorld.csx"
+    }
   ]
 }
