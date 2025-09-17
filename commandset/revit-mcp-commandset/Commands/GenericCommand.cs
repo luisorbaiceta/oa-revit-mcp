@@ -3,12 +3,16 @@ using Newtonsoft.Json.Linq;
 using RevitMCPSDK.API.Interfaces;
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using RevitMCPCommandSet.Services;
 
 namespace RevitMCPCommandSet.Commands
 {
     public class GenericCommand : IRevitCommand, IRevitCommandInitializable
     {
         private static readonly Dictionary<string, Type> _eventHandlerRegistry = new Dictionary<string, Type>();
+        private static JArray _commandDefinitions;
         private IExternalEventHandler _handler;
         private UIApplication _uiApp;
 
@@ -24,9 +28,52 @@ namespace RevitMCPCommandSet.Commands
         public void Initialize(UIApplication uiApp)
         {
             _uiApp = uiApp;
-            if (_eventHandlerRegistry.TryGetValue(CommandName, out Type handlerType))
+            LoadCommandDefinitions();
+
+            var commandDef = _commandDefinitions.FirstOrDefault(c => c["commandName"].ToString() == CommandName) as JObject;
+            if (commandDef == null)
             {
-                _handler = (IExternalEventHandler)Activator.CreateInstance(handlerType);
+                throw new InvalidOperationException($"Command '{CommandName}' not found in command.json.");
+            }
+
+            string commandType = commandDef["type"]?.ToString() ?? "generated";
+
+            if (commandType == "script")
+            {
+                var scriptedHandler = new ScriptedCommandHandler();
+                string scriptPath = commandDef["scriptPath"].ToString();
+
+                // Construct the full path relative to the addin directory
+                string addinPath = Path.GetDirectoryName(typeof(GenericCommand).Assembly.Location);
+                string fullScriptPath = Path.GetFullPath(Path.Combine(addinPath, @"..\..\", scriptPath));
+
+                scriptedHandler.SetScriptPath(fullScriptPath);
+                _handler = scriptedHandler;
+            }
+            else
+            {
+                if (_eventHandlerRegistry.TryGetValue(CommandName, out Type handlerType))
+                {
+                    _handler = (IExternalEventHandler)Activator.CreateInstance(handlerType);
+                }
+            }
+        }
+
+        private static void LoadCommandDefinitions()
+        {
+            if (_commandDefinitions == null)
+            {
+                string addinPath = Path.GetDirectoryName(typeof(GenericCommand).Assembly.Location);
+                string commandJsonPath = Path.GetFullPath(Path.Combine(addinPath, @"..\..\..\", "command.json"));
+
+                if (!File.Exists(commandJsonPath))
+                {
+                    throw new FileNotFoundException("command.json not found.", commandJsonPath);
+                }
+
+                string json = File.ReadAllText(commandJsonPath);
+                JObject commandSet = JObject.Parse(json);
+                _commandDefinitions = (JArray)commandSet["commands"];
             }
         }
 
@@ -39,12 +86,9 @@ namespace RevitMCPCommandSet.Commands
         {
             if (_handler == null)
             {
-                throw new InvalidOperationException($"No event handler registered for command '{CommandName}'.");
+                throw new InvalidOperationException($"No event handler registered or created for command '{CommandName}'.");
             }
 
-            // This part is tricky. The existing commands have custom logic to set parameters on the handler.
-            // I will need to devise a generic way to do this. For now, I will assume the handler
-            // has a method called 'SetParameters' that takes a JObject.
             var setParametersMethod = _handler.GetType().GetMethod("SetParameters");
             if (setParametersMethod != null)
             {
@@ -54,12 +98,9 @@ namespace RevitMCPCommandSet.Commands
             var externalEvent = ExternalEvent.Create(_handler);
             externalEvent.Raise();
 
-            // The original commands have a 'RaiseAndWaitForCompletion' method.
-            // I'll need to replicate that logic here. This will involve using a ManualResetEvent
-            // or similar synchronization primitive in the event handlers.
             if (_handler is IWaitableExternalEventHandler waitableHandler)
             {
-                if (waitableHandler.WaitForCompletion(15000))
+                if (waitableHandler.WaitForCompletion(60000))
                 {
                     var resultProperty = _handler.GetType().GetProperty("Result");
                     if (resultProperty != null)

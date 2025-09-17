@@ -39,19 +39,24 @@ namespace CodeGen
                 string commandName = command["commandName"].Value<string>();
                 string description = command["description"]?.Value<string>() ?? commandName;
 
-                // Generate C# Event Handler
-                string className = ToPascalCase(commandName) + "EventHandler";
-                string csharpFilePath = Path.Combine(csharpOutputDir, className + ".cs");
+                string commandType = command["type"]?.Value<string>() ?? "generated";
 
-                if (File.Exists(csharpFilePath))
+                if (commandType != "script")
                 {
-                    Console.WriteLine($"Skipping existing C# file: {className}.cs");
-                }
-                else
-                {
-                    string csharpFileContent = GenerateEventHandlerClass(className, commandName);
-                    File.WriteAllText(csharpFilePath, csharpFileContent);
-                    Console.WriteLine($"Generated {className}.cs");
+                    // Generate C# Event Handler
+                    string className = ToPascalCase(commandName) + "EventHandler";
+                    string csharpFilePath = Path.Combine(csharpOutputDir, className + ".cs");
+
+                    if (File.Exists(csharpFilePath))
+                    {
+                        Console.WriteLine($"Skipping existing C# file: {className}.cs");
+                    }
+                    else
+                    {
+                        string csharpFileContent = GenerateEventHandlerClass(className, commandName);
+                        File.WriteAllText(csharpFilePath, csharpFileContent);
+                        Console.WriteLine($"Generated {className}.cs");
+                    }
                 }
 
                 // Generate Server Tool

@@ -1,5 +1,7 @@
 using Autodesk.Revit.UI;
 using RevitMCPSDK.API.Interfaces;
+using System;
+using Newtonsoft.Json.Linq;
 
 namespace RevitMCPCommandSet.Services.Generated
 {
@@ -8,17 +10,23 @@ namespace RevitMCPCommandSet.Services.Generated
         public object Result { get; private set; }
         public bool TaskCompleted { get; private set; }
         private readonly System.Threading.ManualResetEvent _resetEvent = new System.Threading.ManualResetEvent(false);
+        private string _code;
+
+        public void SetParameters(JObject parameters)
+        {
+            _code = parameters["code"]?.ToString();
+        }
 
         public void Execute(UIApplication app)
         {
             try
             {
-                // TODO: Implement the command logic here.
-                Result = null;
+                var codeExecutor = new CodeExecutor();
+                Result = codeExecutor.Execute(app, _code);
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine(ex.ToString());
+                Result = $"Error: {ex.Message}\nStackTrace: {ex.StackTrace}";
             }
             finally
             {
@@ -32,7 +40,7 @@ namespace RevitMCPCommandSet.Services.Generated
             return "send_code_to_revit";
         }
 
-        public bool WaitForCompletion(int timeoutMilliseconds = 15000)
+        public bool WaitForCompletion(int timeoutMilliseconds = 60000)
         {
             return _resetEvent.WaitOne(timeoutMilliseconds);
         }
