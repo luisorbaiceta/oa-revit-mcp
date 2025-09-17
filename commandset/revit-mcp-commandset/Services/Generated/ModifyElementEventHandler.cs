@@ -6,41 +6,38 @@ using System;
 using System.Threading;
 using System.Collections.Generic;
 
-namespace RevitMCPCommandSet.Services
+using Newtonsoft.Json.Linq;
+
+namespace RevitMCPCommandSet.Services.Generated
 {
     public class ModifyElementEventHandler : IExternalEventHandler, IWaitableExternalEventHandler
     {
-        private UIApplication uiApp;
-        private UIDocument uiDoc => uiApp.ActiveUIDocument;
-        private Document doc => uiDoc.Document;
-        private Autodesk.Revit.ApplicationServices.Application app => uiApp.Application;
+        public object Result { get; private set; }
+        public bool TaskCompleted { get; private set; }
+        private readonly System.Threading.ManualResetEvent _resetEvent = new System.Threading.ManualResetEvent(false);
 
-        private readonly ManualResetEvent _resetEvent = new ManualResetEvent(false);
-        public ModifyElementSetting ModifyData { get; private set; }
-        public AIResult<string> Result { get; private set; }
+        private ModifyElementSetting _modifyData;
 
-        public void SetParameters(ModifyElementSetting data)
+        public void SetParameters(JObject parameters)
         {
-            ModifyData = data;
-            _resetEvent.Reset();
+            _modifyData = parameters.ToObject<ModifyElementSetting>();
         }
 
         public void Execute(UIApplication uiapp)
         {
-            uiApp = uiapp;
-
             try
             {
+                var doc = uiapp.ActiveUIDocument.Document;
                 using (Transaction trans = new Transaction(doc, "Modify Element"))
                 {
                     trans.Start();
-                    Element element = doc.GetElement(new ElementId(ModifyData.ElementId));
+                    Element element = doc.GetElement(new ElementId(_modifyData.ElementId));
                     if (element == null)
                     {
                         throw new Exception("Element not found.");
                     }
 
-                    foreach (KeyValuePair<string, string> entry in ModifyData.Parameters)
+                    foreach (KeyValuePair<string, string> entry in _modifyData.Parameters)
                     {
                         Parameter param = element.LookupParameter(entry.Key);
                         if (param != null && !param.IsReadOnly)
@@ -67,18 +64,19 @@ namespace RevitMCPCommandSet.Services
             }
             finally
             {
+                TaskCompleted = true;
                 _resetEvent.Set();
             }
         }
 
-        public bool WaitForCompletion(int timeoutMilliseconds = 10000)
+        public bool WaitForCompletion(int timeoutMilliseconds = 15000)
         {
             return _resetEvent.WaitOne(timeoutMilliseconds);
         }
 
         public string GetName()
         {
-            return "Modify Element";
+            return "modify_element";
         }
     }
 }

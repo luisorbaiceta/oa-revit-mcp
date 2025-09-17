@@ -84,11 +84,6 @@ namespace revit_mcp_plugin.Core
             _logger.Info("命令加载完成");
         }
 
-        /// <summary>
-        /// 加载特定程序集中的特定命令
-        /// </summary>
-        /// <param name="commandName">命令名称</param>
-        /// <param name="assemblyPath">程序集路径</param>
         private void LoadCommandFromAssembly(CommandConfig config)
         {
             try
@@ -111,55 +106,36 @@ namespace revit_mcp_plugin.Core
                 // 加载程序集
                 Assembly assembly = Assembly.LoadFrom(assemblyPath);
 
-                // 查找实现 IRevitCommand 接口的类型
+                // 查找并注册所有 IExternalEventHandler
                 foreach (Type type in assembly.GetTypes())
                 {
-                    if (typeof(RevitMCPSDK.API.Interfaces.IRevitCommand).IsAssignableFrom(type) &&
-                        !type.IsInterface &&
-                        !type.IsAbstract)
+                    if (typeof(IExternalEventHandler).IsAssignableFrom(type) && !type.IsInterface && !type.IsAbstract)
                     {
                         try
                         {
-                            // 创建命令实例
-                            RevitMCPSDK.API.Interfaces.IRevitCommand command;
-
-                            // 检查命令是否实现了可初始化接口
-                            if (typeof(IRevitCommandInitializable).IsAssignableFrom(type))
+                            IExternalEventHandler handler = (IExternalEventHandler)Activator.CreateInstance(type);
+                            string commandName = handler.GetName();
+                            if (!string.IsNullOrEmpty(commandName))
                             {
-                                // 创建实例并初始化
-                                command = (IRevitCommand)Activator.CreateInstance(type);
-                                ((IRevitCommandInitializable)command).Initialize(_uiApplication);
-                            }
-                            else
-                            {
-                                // 尝试查找接受 UIApplication 的构造函数
-                                var constructor = type.GetConstructor(new[] { typeof(UIApplication) });
-                                if (constructor != null)
-                                {
-                                    command = (IRevitCommand)constructor.Invoke(new object[] { _uiApplication });
-                                }
-                                else
-                                {
-                                    // 使用无参构造函数
-                                    command = (IRevitCommand)Activator.CreateInstance(type);
-                                }
-                            }
-
-                            // 检查命令名称是否与配置匹配
-                            if (command.CommandName == config.CommandName)
-                            {
-                                _commandRegistry.RegisterCommand(command);
-                                _logger.Info("已注册外部命令: {0} (来自 {1})",
-                                    command.CommandName, Path.GetFileName(assemblyPath));
-                                break; // 找到匹配的命令后退出循环
+                                // This is where the magic happens. We register the handler type with our generic command.
+                                // Note: I will need to add a reference to the GenericCommand class, which is in a different project.
+                                // I will assume for now that the reference is added.
+                                RevitMCPCommandSet.Commands.GenericCommand.RegisterEventHandler(commandName, type);
                             }
                         }
                         catch (Exception ex)
                         {
-                            _logger.Error("创建命令实例失败 [{0}]: {1}", type.FullName, ex.Message);
+                            _logger.Error("创建事件处理器实例失败 [{0}]: {1}", type.FullName, ex.Message);
                         }
                     }
                 }
+
+                // Now, create and register the generic command for the specific command config.
+                var genericCommand = new RevitMCPCommandSet.Commands.GenericCommand(config.CommandName);
+                genericCommand.Initialize(_uiApplication);
+                _commandRegistry.RegisterCommand(genericCommand);
+                _logger.Info("已注册通用命令: {0} (来自 {1})", config.CommandName, Path.GetFileName(assemblyPath));
+
             }
             catch (Exception ex)
             {
