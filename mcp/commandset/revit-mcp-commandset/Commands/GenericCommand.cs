@@ -64,7 +64,7 @@ namespace RevitMCPCommandSet.Commands
             if (_commandDefinitions == null)
             {
                 string addinPath = Path.GetDirectoryName(typeof(GenericCommand).Assembly.Location);
-                string commandJsonPath = Path.GetFullPath(Path.Combine(addinPath, @"..\..\..\", "command.json"));
+                string commandJsonPath = Path.GetFullPath(Path.Combine(addinPath, @"Commands\RevitMCPCommandSet", "command.json"));
 
                 if (!File.Exists(commandJsonPath))
                 {
