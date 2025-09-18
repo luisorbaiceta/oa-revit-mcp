@@ -5,11 +5,11 @@ VisualStudioVersion = 17.9.34714.143
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "revit-mcp-plugin", "revit-mcp-plugin\revit-mcp-plugin.csproj", "{43CD0FD7-DF41-4F64-92BE-A0F78666D86F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RevitMCPCommandSet", "..\commandset\revit-mcp-commandset\RevitMCPCommandSet.csproj", "{684B4880-D6D4-4FEA-614D-4F5E6273E6D7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RevitMCPCommandSet", "..\mcp\commandset\revit-mcp-commandset\RevitMCPCommandSet.csproj", "{684B4880-D6D4-4FEA-614D-4F5E6273E6D7}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{8EC462FD-D22E-90A8-E5CE-7E832BA40C5D}"
 	ProjectSection(SolutionItems) = preProject
-		..\commandset\command.json = ..\commandset\command.json
+		..\mcp\commandset\command.json = ..\mcp\commandset\command.json
 	EndProjectSection
 EndProject
 Global
