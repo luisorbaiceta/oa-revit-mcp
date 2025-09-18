@@ -70,14 +70,6 @@
         <ProjectReference Include="..\..\mcp\commandset\revit-mcp-commandset\RevitMCPCommandSet.csproj" />
     </ItemGroup>
     <ItemGroup>
-      <Reference Include="RevitMCPCommandSet">
-        <HintPath>..\..\mcp\commandset\revit-mcp-commandset\bin\Debug R25\RevitMCPCommandSet.dll</HintPath>
-      </Reference>
-      <Reference Include="System.Text.Json">
-        <HintPath>..\..\..\..\.nuget\packages\system.text.json\9.0.4\lib\net8.0\System.Text.Json.dll</HintPath>
-      </Reference>
-    </ItemGroup>
-    <ItemGroup>
         <None Update="revit-mcp.addin">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
