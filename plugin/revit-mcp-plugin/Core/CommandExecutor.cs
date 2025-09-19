@@ -1,10 +1,9 @@
-﻿using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Linq;
 using RevitMCPSDK.API.Interfaces;
 using RevitMCPSDK.API.Models;
 using RevitMCPSDK.API.Models.JsonRPC;
 using RevitMCPSDK.Exceptions;
 using System;
-using System.Threading.Tasks;
 
 namespace revit_mcp_plugin.Core
 {
@@ -19,7 +18,7 @@ namespace revit_mcp_plugin.Core
             _logger = logger;
         }
 
-        public async Task<string> ExecuteCommandAsync(JsonRPCRequest request)
+        public string ExecuteCommand(JsonRPCRequest request)
         {
             try
             {
@@ -34,15 +33,10 @@ namespace revit_mcp_plugin.Core
 
                 _logger.Info("执行命令: {0}", request.Method);
 
-                // 异步执行命令
+                // 同步执行命令
                 try
                 {
-                    // NOTE: This `await` will block the current client handling thread until the
-                    // Revit command completes. This is a known limitation due to the synchronous
-                    // nature of the ICommand interface, which cannot be changed as it is part
-                    // of an external SDK. For this application's request-response protocol,
-                    // this is acceptable as each client connection runs on its own thread.
-                    object result = await ExternalEventManager.Instance.PostActionAsync(uiApp =>
+                    object result = ExternalEventManager.Instance.ExecuteAction(uiApp =>
                     {
                         // This code now runs in the Revit API context
                         return command.Execute(request.GetParamsObject(), request.Id);
