@@ -4,6 +4,7 @@ using RevitMCPSDK.API.Models;
 using RevitMCPSDK.API.Models.JsonRPC;
 using RevitMCPSDK.Exceptions;
 using System;
+using System.Threading.Tasks;
 
 namespace revit_mcp_plugin.Core
 {
@@ -18,7 +19,7 @@ namespace revit_mcp_plugin.Core
             _logger = logger;
         }
 
-        public string ExecuteCommand(JsonRPCRequest request)
+        public async Task<string> ExecuteCommandAsync(JsonRPCRequest request)
         {
             try
             {
@@ -33,10 +34,15 @@ namespace revit_mcp_plugin.Core
 
                 _logger.Info("执行命令: {0}", request.Method);
 
-                // 执行命令
+                // 异步执行命令
                 try
                 {
-                    object result = command.Execute(request.GetParamsObject(), request.Id);
+                    object result = await ExternalEventManager.Instance.PostActionAsync(uiApp =>
+                    {
+                        // This code now runs in the Revit API context
+                        return command.Execute(request.GetParamsObject(), request.Id);
+                    });
+
                     _logger.Info("命令 {0} 执行成功", request.Method);
 
                     return CreateSuccessResponse(request.Id, result);
@@ -51,10 +57,13 @@ namespace revit_mcp_plugin.Core
                 }
                 catch (Exception ex)
                 {
-                    _logger.Error("命令 {0} 执行时发生异常: {1}", request.Method, ex.Message);
+                    // The exception might be from the Task framework if the TCS was faulted.
+                    // We should check for inner exceptions.
+                    var actualEx = ex.InnerException ?? ex;
+                    _logger.Error("命令 {0} 执行时发生异常: {1}", request.Method, actualEx.Message);
                     return CreateErrorResponse(request.Id,
                         JsonRPCErrorCodes.InternalError,
-                        ex.Message);
+                        actualEx.Message);
                 }
             }
             catch (Exception ex)
