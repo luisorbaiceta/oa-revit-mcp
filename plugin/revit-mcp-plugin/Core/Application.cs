@@ -2,8 +2,7 @@
 using Autodesk.Revit.UI;
 using System.Reflection;
 using System.Windows.Media.Imaging;
-
-
+using revit_mcp_plugin.Utils;
 
 namespace revit_mcp_plugin.Core
 {
@@ -38,8 +37,15 @@ namespace revit_mcp_plugin.Core
                 {
                     SocketService.Instance.Stop();
                 }
+
+                // Dispose the event manager
+                ExternalEventManager.Instance.Dispose();
             }
-            catch { }
+            catch (Exception ex)
+            {
+                var logger = new Logger();
+                logger.Error("Error during shutdown: " + ex.ToString());
+            }
 
             return Result.Succeeded;
         }
