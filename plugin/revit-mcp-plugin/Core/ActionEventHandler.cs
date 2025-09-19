@@ -8,7 +8,7 @@ namespace revit_mcp_plugin.Core
     /// <summary>
     /// A wrapper to hold the action to be executed and its completion source.
     /// </summary>
-    internal class ActionWrapper
+    public class ActionWrapper // Changed from internal to public to fix CS0051
     {
         public Func<UIApplication, object> Action { get; set; }
         public TaskCompletionSource<object> Tcs { get; set; }
