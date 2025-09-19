@@ -10,22 +10,6 @@ namespace revit_mcp_plugin.Core
     {
         public Result OnStartup(UIControlledApplication application)
         {
-            // Initialize services
-            try
-            {
-                // The SocketService Initialize will also initialize the ExternalEventManager.
-                // We need to pass a UIApplication object.
-                SocketService.Instance.Initialize(new UIApplication(application));
-            }
-            catch(Exception ex)
-            {
-                var logger = new Logger();
-                logger.Error("Failed to initialize SocketService: " + ex.ToString());
-                // Optionally, show a task dialog to the user
-                TaskDialog.Show("Revit MCP Plugin Error", "Failed to initialize the plugin. Please check the logs for details.");
-                return Result.Failed;
-            }
-
             RibbonPanel mcpPanel = application.CreateRibbonPanel("Revit MCP Plugin");
 
             PushButtonData pushButtonData = new PushButtonData("ID_EXCMD_TOGGLE_REVIT_MCP", "Revit MCP\r\n Switch",

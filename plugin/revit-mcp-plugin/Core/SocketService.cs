@@ -21,6 +21,7 @@ namespace revit_mcp_plugin.Core
         private TcpListener _listener;
         private Thread _listenerThread;
         private bool _isRunning;
+        private bool _isInitialized = false;
         private int _port = 8080;
         // This is not used in the original code after initialization, so I can remove it.
         // private UIApplication _uiApp;
@@ -45,6 +46,7 @@ namespace revit_mcp_plugin.Core
         }
 
         public bool IsRunning => _isRunning;
+        public bool IsInitialized => _isInitialized;
 
         public int Port
         {
@@ -55,6 +57,8 @@ namespace revit_mcp_plugin.Core
         // 初始化
         public void Initialize(UIApplication uiApp)
         {
+            if (_isInitialized) return;
+
             // _uiApp = uiApp; // No longer needed to be stored
 
             // 初始化事件管理器
@@ -80,6 +84,7 @@ namespace revit_mcp_plugin.Core
             commandManager.LoadCommands();
 
             _logger.Info($"Socket service initialized on port {_port}");
+            _isInitialized = true;
         }
 
         public void Start()
@@ -135,7 +140,10 @@ namespace revit_mcp_plugin.Core
                 {
                     TcpClient client = _listener.AcceptTcpClient();
 
-                    // Using async void here is acceptable for a top-level event handler on a new thread.
+                    // Each client connection is handled on its own thread. This means that a long-running,
+                    // blocking command from one client will not prevent the server from accepting new
+                    // connections from other clients. However, the connection for the blocked client
+                    // will be unresponsive until the command completes.
                     Thread clientThread = new Thread(async (c) => await HandleClientCommunication(c))
                     {
                         IsBackground = true
