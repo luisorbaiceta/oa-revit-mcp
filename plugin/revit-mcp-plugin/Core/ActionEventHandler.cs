@@ -53,6 +53,7 @@ namespace revit_mcp_plugin.Core
                 }
             }
 
+
             // If there are more items in the queue, raise the event again
             // to process the next item in the queue. This creates a chain
             // of events that continues until the queue is empty.
