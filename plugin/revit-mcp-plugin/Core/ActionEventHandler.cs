@@ -1,6 +1,5 @@
 using Autodesk.Revit.UI;
 using System;
-using System.Collections.Concurrent;
 using System.Threading.Tasks;
 
 namespace revit_mcp_plugin.Core
@@ -8,58 +7,42 @@ namespace revit_mcp_plugin.Core
     /// <summary>
     /// A wrapper to hold the action to be executed and its completion source.
     /// </summary>
-    public class ActionWrapper // Changed from internal to public to fix CS0051
+    public class ActionWrapper
     {
         public Func<UIApplication, object> Action { get; set; }
         public TaskCompletionSource<object> Tcs { get; set; }
     }
 
     /// <summary>
-    /// An external event handler that can execute arbitrary actions
-    /// queued from any thread. This handler implements a self-raising
-    /// mechanism to ensure all queued actions are processed.
+    /// An external event handler that executes a single action.
+    /// Concurrency and thread safety are handled by the caller.
     /// </summary>
     public class ActionEventHandler : IExternalEventHandler
     {
-        private readonly ConcurrentQueue<ActionWrapper> _queue = new ConcurrentQueue<ActionWrapper>();
-        private ExternalEvent _externalEvent;
+        private ActionWrapper _action;
 
-        /// <summary>
-        /// Sets the external event that this handler is associated with.
-        /// This is used to re-raise the event if the queue is not empty.
-        /// </summary>
-        public void SetExternalEvent(ExternalEvent exEvent)
+        public void SetAction(ActionWrapper action)
         {
-            _externalEvent = exEvent;
-        }
-
-        public void EnqueueAction(ActionWrapper wrapper)
-        {
-            _queue.Enqueue(wrapper);
+            _action = action;
         }
 
         public void Execute(UIApplication app)
         {
-            if (_queue.TryDequeue(out var wrapper))
+            if (_action != null)
             {
                 try
                 {
-                    var result = wrapper.Action(app);
-                    wrapper.Tcs.SetResult(result);
+                    var result = _action.Action(app);
+                    _action.Tcs.SetResult(result);
                 }
                 catch (Exception ex)
                 {
-                    wrapper.Tcs.SetException(ex);
+                    _action.Tcs.SetException(ex);
                 }
-            }
-
-
-            // If there are more items in the queue, raise the event again
-            // to process the next item in the queue. This creates a chain
-            // of events that continues until the queue is empty.
-            if (!_queue.IsEmpty && _externalEvent != null)
-            {
-                _externalEvent.Raise();
+                finally
+                {
+                    _action = null;
+                }
             }
         }
 

@@ -1,10 +1,9 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
-using System.Threading.Tasks; // Added
 using Autodesk.Revit.UI;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -23,8 +22,6 @@ namespace revit_mcp_plugin.Core
         private bool _isRunning;
         private bool _isInitialized = false;
         private int _port = 8080;
-        // This is not used in the original code after initialization, so I can remove it.
-        // private UIApplication _uiApp;
         private ICommandRegistry _commandRegistry;
         private ILogger _logger;
         private CommandExecutor _commandExecutor;
@@ -59,26 +56,19 @@ namespace revit_mcp_plugin.Core
         {
             if (_isInitialized) return;
 
-            // _uiApp = uiApp; // No longer needed to be stored
-
-            // 初始化事件管理器
             ExternalEventManager.Instance.Initialize(uiApp, _logger);
 
-            // 记录当前 Revit 版本
             var versionAdapter = new RevitMCPSDK.API.Utils.RevitVersionAdapter(uiApp.Application);
             string currentVersion = versionAdapter.GetRevitVersion();
             _logger.Info("当前 Revit 版本: {0}", currentVersion);
 
-            // 创建命令执行器
             _commandExecutor = new CommandExecutor(_commandRegistry, _logger);
 
-            // 加载配置并注册命令
             ConfigurationManager configManager = new ConfigurationManager(_logger);
             configManager.LoadConfiguration();
             
-            _port = 8080; // 固定端口号
+            _port = 8080;
 
-            // 加载命令
             CommandManager commandManager = new CommandManager(
                 _commandRegistry, _logger, configManager, uiApp);
             commandManager.LoadCommands();
@@ -140,11 +130,7 @@ namespace revit_mcp_plugin.Core
                 {
                     TcpClient client = _listener.AcceptTcpClient();
 
-                    // Each client connection is handled on its own thread. This means that a long-running,
-                    // blocking command from one client will not prevent the server from accepting new
-                    // connections from other clients. However, the connection for the blocked client
-                    // will be unresponsive until the command completes.
-                    Thread clientThread = new Thread(async (c) => await HandleClientCommunication(c))
+                    Thread clientThread = new Thread(HandleClientCommunication)
                     {
                         IsBackground = true
                     };
@@ -161,7 +147,7 @@ namespace revit_mcp_plugin.Core
             }
         }
 
-        private async Task HandleClientCommunication(object clientObj)
+        private void HandleClientCommunication(object clientObj)
         {
             TcpClient tcpClient = (TcpClient)clientObj;
             NetworkStream stream = tcpClient.GetStream();
@@ -176,7 +162,7 @@ namespace revit_mcp_plugin.Core
 
                     try
                     {
-                        bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length);
+                        bytesRead = stream.Read(buffer, 0, buffer.Length);
                     }
                     catch (IOException)
                     {
@@ -191,10 +177,10 @@ namespace revit_mcp_plugin.Core
                     string message = Encoding.UTF8.GetString(buffer, 0, bytesRead);
                     _logger.Info($"收到消息: {message}");
 
-                    string response = await ProcessJsonRPCRequestAsync(message);
+                    string response = ProcessJsonRPCRequest(message);
 
                     byte[] responseData = Encoding.UTF8.GetBytes(response);
-                    await stream.WriteAsync(responseData, 0, responseData.Length);
+                    stream.Write(responseData, 0, responseData.Length);
                 }
             }
             catch(Exception ex)
@@ -207,7 +193,7 @@ namespace revit_mcp_plugin.Core
             }
         }
 
-        private async Task<string> ProcessJsonRPCRequestAsync(string requestJson)
+        private string ProcessJsonRPCRequest(string requestJson)
         {
             try
             {
@@ -218,8 +204,7 @@ namespace revit_mcp_plugin.Core
                     return CreateErrorResponse(null, JsonRPCErrorCodes.InvalidRequest, "Invalid JSON-RPC request");
                 }
 
-                // Use the CommandExecutor to handle the request asynchronously
-                return await _commandExecutor.ExecuteCommandAsync(request);
+                return _commandExecutor.ExecuteCommand(request);
             }
             catch (JsonException)
             {
