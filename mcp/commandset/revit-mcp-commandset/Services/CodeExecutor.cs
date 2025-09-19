@@ -83,16 +83,25 @@ namespace RevitMCP.DynamicCode
         private CSharpCompilation CreateCompilation(string code)
         {
             var syntaxTree = CSharpSyntaxTree.ParseText(code);
-            var assemblies = AppDomain.CurrentDomain.GetAssemblies();
-            var references = new List<MetadataReference>();
 
-            foreach (var assembly in assemblies)
+            // Get the directory of the currently executing assembly to find RevitAPI.dll
+            string assemblyLocation = Path.GetDirectoryName(typeof(CodeExecutor).Assembly.Location);
+
+            // Get the path to the .NET framework directory
+            string dotNetPath = Path.GetDirectoryName(typeof(object).Assembly.Location);
+
+            var references = new List<MetadataReference>
             {
-                if (!assembly.IsDynamic && !string.IsNullOrEmpty(assembly.Location))
-                {
-                    references.Add(MetadataReference.CreateFromFile(assembly.Location));
-                }
-            }
+                // Add specific .NET assemblies
+                MetadataReference.CreateFromFile(Path.Combine(dotNetPath, "mscorlib.dll")),
+                MetadataReference.CreateFromFile(Path.Combine(dotNetPath, "System.dll")),
+                MetadataReference.CreateFromFile(Path.Combine(dotNetPath, "System.Core.dll")),
+                MetadataReference.CreateFromFile(Path.Combine(dotNetPath, "System.Runtime.dll")),
+
+                // Add Revit API assemblies
+                MetadataReference.CreateFromFile(Path.Combine(assemblyLocation, "RevitAPI.dll")),
+                MetadataReference.CreateFromFile(Path.Combine(assemblyLocation, "RevitAPIUI.dll"))
+            };
 
             return CSharpCompilation.Create(
                 "RevitMCP.DynamicAssembly",

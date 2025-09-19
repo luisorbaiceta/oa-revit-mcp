@@ -40,38 +40,14 @@ export class RevitClientConnection {
   }
 
   private processBuffer(): void {
-    let braceCount = 0;
-    let lastIndex = 0;
-
-    for (let i = 0; i < this.buffer.length; i++) {
-      if (this.buffer[i] === "{") {
-        braceCount++;
-      } else if (this.buffer[i] === "}") {
-        braceCount--;
-      }
-
-      if (braceCount === 0 && i > lastIndex) {
-        const jsonString = this.buffer.substring(lastIndex, i + 1);
-        try {
-          // We have a complete JSON object
-          this.handleResponse(jsonString);
-          // Move lastIndex to the start of the next potential JSON object
-          lastIndex = i + 1;
-        } catch (error) {
-          // This could happen if the substring is not a valid JSON object,
-          // which might indicate a problem with the data stream or our parsing logic.
-          // For now, we'll log the error and continue, which will discard the malformed segment.
-          console.error("Error parsing JSON object from buffer:", error);
-          console.error("Malformed JSON string:", jsonString);
-          // Move lastIndex to avoid getting stuck on this segment
-          lastIndex = i + 1;
-        }
-      }
-    }
-
-    // Update the buffer to remove the processed parts
-    if (lastIndex > 0) {
-      this.buffer = this.buffer.substring(lastIndex);
+    try {
+      // 尝试解析JSON
+      const response = JSON.parse(this.buffer);
+      // 如果成功解析，处理响应并清空缓冲区
+      this.handleResponse(this.buffer);
+      this.buffer = "";
+    } catch (e) {
+      // 如果解析失败，可能是因为数据不完整，继续等待更多数据
     }
   }
 

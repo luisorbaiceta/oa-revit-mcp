@@ -151,18 +151,18 @@ namespace revit_mcp_plugin.Core
         {
             TcpClient tcpClient = (TcpClient)clientObj;
             NetworkStream stream = tcpClient.GetStream();
-            var messageBuffer = new StringBuilder();
 
             try
             {
-                byte[] readBuffer = new byte[8192];
+                byte[] buffer = new byte[8192];
 
                 while (_isRunning && tcpClient.Connected)
                 {
-                    int bytesRead;
+                    int bytesRead = 0;
+
                     try
                     {
-                        bytesRead = stream.Read(readBuffer, 0, readBuffer.Length);
+                        bytesRead = stream.Read(buffer, 0, buffer.Length);
                     }
                     catch (IOException)
                     {
@@ -171,71 +171,19 @@ namespace revit_mcp_plugin.Core
 
                     if (bytesRead == 0)
                     {
-                        break; // Client disconnected gracefully
+                        break; // Client disconnected
                     }
 
-                    // Append the received data to our buffer
-                    messageBuffer.Append(Encoding.UTF8.GetString(readBuffer, 0, bytesRead));
+                    string message = Encoding.UTF8.GetString(buffer, 0, bytesRead);
+                    _logger.Info($"收到消息: {message}");
 
-                    // Process all complete JSON objects in the buffer
-                    while (true)
-                    {
-                        string bufferContent = messageBuffer.ToString();
-                        if (string.IsNullOrWhiteSpace(bufferContent)) break;
+                    string response = ProcessJsonRPCRequest(message);
 
-                        // Find the start of a JSON object
-                        int startIndex = bufferContent.IndexOf('{');
-                        if (startIndex == -1)
-                        {
-                            // No start of a JSON object, clear buffer to avoid garbage
-                            messageBuffer.Clear();
-                            break;
-                        }
-
-                        // Find the end of the JSON object by counting braces
-                        int braceCount = 0;
-                        int endIndex = -1;
-                        for (int i = startIndex; i < bufferContent.Length; i++)
-                        {
-                            if (bufferContent[i] == '{')
-                            {
-                                braceCount++;
-                            }
-                            else if (bufferContent[i] == '}')
-                            {
-                                braceCount--;
-                            }
-
-                            if (braceCount == 0)
-                            {
-                                endIndex = i;
-                                break;
-                            }
-                        }
-
-                        if (endIndex != -1)
-                        {
-                            // We have a complete JSON object string
-                            string jsonRequest = bufferContent.Substring(startIndex, endIndex - startIndex + 1);
-                            _logger.Info($"收到消息: {jsonRequest}");
-
-                            string response = ProcessJsonRPCRequest(jsonRequest);
-
-                            byte[] responseData = Encoding.UTF8.GetBytes(response);
-                            stream.Write(responseData, 0, responseData.Length);
-
-                            // Remove the processed message from the buffer
-                            messageBuffer.Remove(0, endIndex + 1);
-                        }
-                        else
-                        {
-                            // No complete JSON object found yet, wait for more data
-                            break;
-                        }
-                    }
+                    byte[] responseData = Encoding.UTF8.GetBytes(response);
+                    stream.Write(responseData, 0, responseData.Length);
                 }
             }
-            catch (Exception ex)
+            catch(Exception ex)
             {
                 _logger.Error("Error in HandleClientCommunication: " + ex.Message);
             }
