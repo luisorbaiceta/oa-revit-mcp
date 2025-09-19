@@ -10,7 +10,8 @@
   "scripts": {
     "clean": "rimraf build",
     "prebuild": "npm run clean",
-    "build": "tsc"
+    "build": "tsc",
+    "test": "jest"
   },
   "files": [
     "build"
@@ -32,9 +33,12 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
+    "@types/jest": "^30.0.0",
     "@types/node": "^22.13.10",
     "@types/ws": "^8.18.0",
+    "jest": "^30.1.3",
     "rimraf": "^5.0.10",
+    "ts-jest": "^29.4.3",
     "typescript": "^5.8.2"
   }
 }

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { withRevitConnection } from "../../utils/ConnectionManager.js";
+import { getRevitConnection } from "../../utils/ConnectionManager.js";
 
 export function registerSendCodeToRevitTool(server: McpServer) {
   server.tool(
@@ -26,9 +26,11 @@ export function registerSendCodeToRevitTool(server: McpServer) {
       };
 
       try {
-        const response = await withRevitConnection(async (revitClient: any) => {
-          return await revitClient.sendCommand("send_code_to_revit", params);
-        });
+        const revitClient = await getRevitConnection();
+        const response = await revitClient.sendCommand(
+          "send_code_to_revit",
+          params
+        );
 
         return {
           content: [
