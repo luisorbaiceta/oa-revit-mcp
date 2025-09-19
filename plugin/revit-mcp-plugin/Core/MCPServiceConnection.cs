@@ -22,7 +22,11 @@ namespace revit_mcp_plugin.Core
                 }
                 else
                 {
-                    service.Initialize(commandData.Application);
+                    // Ensure the service is initialized, but only once.
+                    if (!service.IsInitialized)
+                    {
+                        service.Initialize(commandData.Application);
+                    }
                     service.Start();
                     TaskDialog.Show("revitMCP", "Open Server");
                 }

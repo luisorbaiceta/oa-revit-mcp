@@ -37,6 +37,11 @@ namespace revit_mcp_plugin.Core
                 // 异步执行命令
                 try
                 {
+                    // NOTE: This `await` will block the current client handling thread until the
+                    // Revit command completes. This is a known limitation due to the synchronous
+                    // nature of the ICommand interface, which cannot be changed as it is part
+                    // of an external SDK. For this application's request-response protocol,
+                    // this is acceptable as each client connection runs on its own thread.
                     object result = await ExternalEventManager.Instance.PostActionAsync(uiApp =>
                     {
                         // This code now runs in the Revit API context
