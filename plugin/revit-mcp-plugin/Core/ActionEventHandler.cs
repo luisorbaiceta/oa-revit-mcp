@@ -16,11 +16,22 @@ namespace revit_mcp_plugin.Core
 
     /// <summary>
     /// An external event handler that can execute arbitrary actions
-    /// queued from any thread.
+    /// queued from any thread. This handler implements a self-raising
+    /// mechanism to ensure all queued actions are processed.
     /// </summary>
     public class ActionEventHandler : IExternalEventHandler
     {
         private readonly ConcurrentQueue<ActionWrapper> _queue = new ConcurrentQueue<ActionWrapper>();
+        private ExternalEvent _externalEvent;
+
+        /// <summary>
+        /// Sets the external event that this handler is associated with.
+        /// This is used to re-raise the event if the queue is not empty.
+        /// </summary>
+        public void SetExternalEvent(ExternalEvent exEvent)
+        {
+            _externalEvent = exEvent;
+        }
 
         public void EnqueueAction(ActionWrapper wrapper)
         {
@@ -29,7 +40,7 @@ namespace revit_mcp_plugin.Core
 
         public void Execute(UIApplication app)
         {
-            while (_queue.TryDequeue(out var wrapper))
+            if (_queue.TryDequeue(out var wrapper))
             {
                 try
                 {
@@ -40,6 +51,15 @@ namespace revit_mcp_plugin.Core
                 {
                     wrapper.Tcs.SetException(ex);
                 }
+            }
+
+
+            // If there are more items in the queue, raise the event again
+            // to process the next item in the queue. This creates a chain
+            // of events that continues until the queue is empty.
+            if (!_queue.IsEmpty && _externalEvent != null)
+            {
+                _externalEvent.Raise();
             }
         }
 

@@ -35,6 +35,7 @@ namespace revit_mcp_plugin.Core
             _logger = logger;
             _handler = new ActionEventHandler();
             _externalEvent = ExternalEvent.Create(_handler);
+            _handler.SetExternalEvent(_externalEvent); // Pass the event to the handler
             _isInitialized = true;
             _logger.Info("ExternalEventManager initialized.");
         }
