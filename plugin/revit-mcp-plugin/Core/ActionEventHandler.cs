@@ -28,21 +28,22 @@ namespace revit_mcp_plugin.Core
 
         public void Execute(UIApplication app)
         {
-            if (_action != null)
+            if (_action == null) return;
+
+            var currentAction = _action;
+            _action = null;
+
+            try
             {
-                try
-                {
-                    var result = _action.Action(app);
-                    _action.Tcs.SetResult(result);
-                }
-                catch (Exception ex)
-                {
-                    _action.Tcs.SetException(ex);
-                }
-                finally
-                {
-                    _action = null;
-                }
+                var result = currentAction.Action(app);
+                currentAction.Tcs.SetResult(result);
+            }
+            catch (Exception ex)
+            {
+                // The exception might be from the Task framework if the TCS was faulted.
+                // We should check for inner exceptions.
+                var actualEx = ex.InnerException ?? ex;
+                currentAction.Tcs.SetException(actualEx);
             }
         }
 
