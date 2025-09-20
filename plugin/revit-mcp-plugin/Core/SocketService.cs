@@ -56,7 +56,7 @@ namespace revit_mcp_plugin.Core
         {
             if (_isInitialized) return;
 
-            ExternalEventManager.Instance.Initialize(uiApp, _logger);
+            // The new transient event handler model does not require central initialization.
 
             var versionAdapter = new RevitMCPSDK.API.Utils.RevitVersionAdapter(uiApp.Application);
             string currentVersion = versionAdapter.GetRevitVersion();
