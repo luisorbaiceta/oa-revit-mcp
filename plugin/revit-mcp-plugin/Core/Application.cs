@@ -38,8 +38,8 @@ namespace revit_mcp_plugin.Core
                     SocketService.Instance.Stop();
                 }
 
-                // Dispose the event manager
-                ExternalEventManager.Instance.Dispose();
+                // No need to dispose a central executor anymore.
+                // Each command creates and disposes its own event handler.
             }
             catch (Exception ex)
             {

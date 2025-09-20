@@ -1,9 +1,11 @@
+using Autodesk.Revit.UI;
 using Newtonsoft.Json.Linq;
 using RevitMCPSDK.API.Interfaces;
 using RevitMCPSDK.API.Models;
 using RevitMCPSDK.API.Models.JsonRPC;
 using RevitMCPSDK.Exceptions;
 using System;
+using System.Threading.Tasks;
 
 namespace revit_mcp_plugin.Core
 {
@@ -36,11 +38,21 @@ namespace revit_mcp_plugin.Core
                 // 同步执行命令
                 try
                 {
-                    object result = ExternalEventManager.Instance.ExecuteAction(uiApp =>
+                    var tcs = new TaskCompletionSource<object>(TaskCreationOptions.RunContinuationsAsynchronously);
+                    var handler = new CommandEventHandler(
+                        uiApp => command.Execute(request.GetParamsObject(), request.Id),
+                        tcs
+                    );
+
+                    // The handler is created and passed to the external event.
+                    // The 'using' block ensures the event is disposed of correctly.
+                    using (var exEvent = ExternalEvent.Create(handler))
                     {
-                        // This code now runs in the Revit API context
-                        return command.Execute(request.GetParamsObject(), request.Id);
-                    });
+                        exEvent.Raise();
+                    }
+
+                    // This will block the current thread until the handler completes the task.
+                    object result = tcs.Task.Result;
 
                     _logger.Info("命令 {0} 执行成功", request.Method);
 
