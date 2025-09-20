@@ -1,13 +1,12 @@
 using Autodesk.Revit.UI;
 using RevitMCPSDK.API.Interfaces;
 using System;
-using System.Collections.Concurrent;
 using System.Threading.Tasks;
 
 namespace revit_mcp_plugin.Core
 {
     /// <summary>
-    /// Manages an external event to run actions in a valid Revit API context using a queue.
+    /// Manages a single external event to run actions in a valid Revit API context.
     /// This class ensures that all actions are executed synchronously from the caller's perspective.
     /// </summary>
     public class ExternalEventManager
@@ -17,8 +16,7 @@ namespace revit_mcp_plugin.Core
         private ExternalEvent _externalEvent;
         private bool _isInitialized = false;
         private ILogger _logger;
-        // The queue for pending actions.
-        private ConcurrentQueue<ActionWrapper> _actionQueue;
+        private readonly object _lock = new object();
 
         public static ExternalEventManager Instance
         {
@@ -37,15 +35,14 @@ namespace revit_mcp_plugin.Core
             if (_isInitialized) return;
 
             _logger = logger;
-            _actionQueue = new ConcurrentQueue<ActionWrapper>();
-            _handler = new ActionEventHandler(_actionQueue); // Pass the queue to the handler
+            _handler = new ActionEventHandler();
             _externalEvent = ExternalEvent.Create(_handler);
             _isInitialized = true;
             _logger.Info("ExternalEventManager initialized.");
         }
 
         /// <summary>
-        /// Queues an action to be executed in the Revit API context.
+        /// Executes an action in the Revit API context.
         /// This method is synchronous and will block until the action is completed.
         /// It is thread-safe.
         /// </summary>
@@ -53,8 +50,6 @@ namespace revit_mcp_plugin.Core
         /// <returns>The result of the action.</returns>
         public object ExecuteAction(Func<UIApplication, object> action)
         {
-            // The lock is removed to prevent deadlocks and improve performance.
-            // Concurrency is now handled by the ConcurrentQueue.
             if (!_isInitialized)
             {
                 _logger.Error("ExternalEventManager is not initialized.");
@@ -67,8 +62,11 @@ namespace revit_mcp_plugin.Core
                 Tcs = new TaskCompletionSource<object>(TaskCreationOptions.RunContinuationsAsynchronously)
             };
 
-            _actionQueue.Enqueue(wrapper);
-            _externalEvent.Raise();
+            lock (_lock)
+            {
+                _handler.SetAction(wrapper);
+                _externalEvent.Raise();
+            }
 
             // This will block the current thread until the action is executed
             // and the TaskCompletionSource is set.
@@ -82,11 +80,6 @@ namespace revit_mcp_plugin.Core
             _externalEvent?.Dispose();
             _handler = null;
             _externalEvent = null;
-            // Clear the queue on dispose
-            while (_actionQueue.TryDequeue(out var wrapper))
-            {
-                wrapper.Tcs.TrySetCanceled();
-            }
             _isInitialized = false;
             _logger.Info("ExternalEventManager disposed.");
         }

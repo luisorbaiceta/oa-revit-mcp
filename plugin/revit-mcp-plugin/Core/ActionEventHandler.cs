@@ -1,6 +1,5 @@
 using Autodesk.Revit.UI;
 using System;
-using System.Collections.Concurrent;
 using System.Threading.Tasks;
 
 namespace revit_mcp_plugin.Core
@@ -15,29 +14,34 @@ namespace revit_mcp_plugin.Core
     }
 
     /// <summary>
-    /// An external event handler that executes actions from a queue.
+    /// An external event handler that executes a single action.
+    /// Concurrency and thread safety are handled by the caller.
     /// </summary>
     public class ActionEventHandler : IExternalEventHandler
     {
-        private readonly ConcurrentQueue<ActionWrapper> _queue;
+        private ActionWrapper _action;
 
-        public ActionEventHandler(ConcurrentQueue<ActionWrapper> queue)
+        public void SetAction(ActionWrapper action)
         {
-            _queue = queue ?? throw new ArgumentNullException(nameof(queue));
+            _action = action;
         }
 
         public void Execute(UIApplication app)
         {
-            if (_queue.TryDequeue(out ActionWrapper wrapper))
+            if (_action != null)
             {
                 try
                 {
-                    var result = wrapper.Action(app);
-                    wrapper.Tcs.SetResult(result);
+                    var result = _action.Action(app);
+                    _action.Tcs.SetResult(result);
                 }
                 catch (Exception ex)
                 {
-                    wrapper.Tcs.SetException(ex);
+                    _action.Tcs.SetException(ex);
+                }
+                finally
+                {
+                    _action = null;
                 }
             }
         }
