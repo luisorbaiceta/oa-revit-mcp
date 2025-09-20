@@ -26,9 +26,6 @@ namespace revit_mcp_plugin.Core
             mcp_settings_pushButtonData.LargeImage = new BitmapImage(new Uri("/revit-mcp-plugin;component/Core/Ressources/settings-32.png", UriKind.RelativeOrAbsolute));
             mcpPanel.AddItem(mcp_settings_pushButtonData);
 
-            // Initialize the ApiExecutor in a valid Revit API context.
-            ApiExecutor.Instance.Initialize();
-
             return Result.Succeeded;
         }
 
@@ -41,8 +38,8 @@ namespace revit_mcp_plugin.Core
                     SocketService.Instance.Stop();
                 }
 
-                // Dispose the singleton ApiExecutor.
-                ApiExecutor.Instance.Dispose();
+                // Dispose the event manager
+                ExternalEventManager.Instance.Dispose();
             }
             catch (Exception ex)
             {

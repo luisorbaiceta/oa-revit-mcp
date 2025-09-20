@@ -4,7 +4,6 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using Autodesk.Revit.UI;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -57,7 +56,7 @@ namespace revit_mcp_plugin.Core
         {
             if (_isInitialized) return;
 
-            // The new transient event handler model does not require central initialization.
+            ExternalEventManager.Instance.Initialize(uiApp, _logger);
 
             var versionAdapter = new RevitMCPSDK.API.Utils.RevitVersionAdapter(uiApp.Application);
             string currentVersion = versionAdapter.GetRevitVersion();
@@ -148,7 +147,7 @@ namespace revit_mcp_plugin.Core
             }
         }
 
-        private async void HandleClientCommunication(object clientObj)
+        private void HandleClientCommunication(object clientObj)
         {
             TcpClient tcpClient = (TcpClient)clientObj;
             NetworkStream stream = tcpClient.GetStream();
@@ -163,7 +162,7 @@ namespace revit_mcp_plugin.Core
                     int bytesRead;
                     try
                     {
-                        bytesRead = await stream.ReadAsync(readBuffer, 0, readBuffer.Length);
+                        bytesRead = stream.Read(readBuffer, 0, readBuffer.Length);
                     }
                     catch (IOException)
                     {
@@ -220,10 +219,10 @@ namespace revit_mcp_plugin.Core
                             string jsonRequest = bufferContent.Substring(startIndex, endIndex - startIndex + 1);
                             _logger.Info($"收到消息: {jsonRequest}");
 
-                            string response = await ProcessJsonRPCRequest(jsonRequest);
+                            string response = ProcessJsonRPCRequest(jsonRequest);
 
                             byte[] responseData = Encoding.UTF8.GetBytes(response);
-                            await stream.WriteAsync(responseData, 0, responseData.Length);
+                            stream.Write(responseData, 0, responseData.Length);
 
                             // Remove the processed message from the buffer
                             messageBuffer.Remove(0, endIndex + 1);
@@ -246,7 +245,7 @@ namespace revit_mcp_plugin.Core
             }
         }
 
-        private async Task<string> ProcessJsonRPCRequest(string requestJson)
+        private string ProcessJsonRPCRequest(string requestJson)
         {
             try
             {
@@ -257,7 +256,7 @@ namespace revit_mcp_plugin.Core
                     return CreateErrorResponse(null, JsonRPCErrorCodes.InvalidRequest, "Invalid JSON-RPC request");
                 }
 
-                return await _commandExecutor.ExecuteCommand(request);
+                return _commandExecutor.ExecuteCommand(request);
             }
             catch (JsonException)
             {
