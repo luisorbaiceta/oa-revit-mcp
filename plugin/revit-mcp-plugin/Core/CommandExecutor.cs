@@ -4,6 +4,7 @@ using RevitMCPSDK.API.Models;
 using RevitMCPSDK.API.Models.JsonRPC;
 using RevitMCPSDK.Exceptions;
 using System;
+using System.Threading.Tasks;
 
 namespace revit_mcp_plugin.Core
 {
@@ -18,7 +19,7 @@ namespace revit_mcp_plugin.Core
             _logger = logger;
         }
 
-        public string ExecuteCommand(JsonRPCRequest request)
+        public async Task<string> ExecuteCommand(JsonRPCRequest request)
         {
             try
             {
@@ -33,10 +34,10 @@ namespace revit_mcp_plugin.Core
 
                 _logger.Info("执行命令: {0}", request.Method);
 
-                // 同步执行命令
+                // 异步执行命令
                 try
                 {
-                    object result = ApiExecutor.Instance.ExecuteAction(uiApp =>
+                    object result = await ApiExecutor.Instance.ExecuteActionAsync(uiApp =>
                     {
                         // This code now runs in the Revit API context
                         return command.Execute(request.GetParamsObject(), request.Id);

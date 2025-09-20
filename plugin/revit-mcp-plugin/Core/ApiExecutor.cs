@@ -4,20 +4,12 @@ using System.Threading.Tasks;
 
 namespace revit_mcp_plugin.Core
 {
-    /// <summary>
-    /// A wrapper to hold the action to be executed and its completion source.
-    /// This is kept in this file to reduce file count and simplify.
-    /// </summary>
     public class ActionWrapper
     {
         public Func<UIApplication, object> Action { get; set; }
         public TaskCompletionSource<object> Tcs { get; set; }
     }
 
-    /// <summary>
-    /// A singleton class to execute actions in the Revit UI context.
-    /// It must be initialized at startup in a valid Revit API context.
-    /// </summary>
     public class ApiExecutor : IExternalEventHandler
     {
         private static ApiExecutor _instance;
@@ -25,31 +17,19 @@ namespace revit_mcp_plugin.Core
         private ActionWrapper _action;
         private readonly object _lock = new object();
 
-        // Private constructor to ensure singleton pattern.
         private ApiExecutor() { }
 
-        /// <summary>
-        /// Gets the singleton instance of the ApiExecutor.
-        /// </summary>
         public static ApiExecutor Instance => _instance ?? (_instance = new ApiExecutor());
 
-        /// <summary>
-        /// Initializes the ApiExecutor and creates the ExternalEvent.
-        /// This MUST be called from a valid Revit API context, such as OnStartup.
-        /// </summary>
         public void Initialize()
         {
             if (_externalEvent == null)
             {
-                // 'this' is the handler because this class implements IExternalEventHandler.
                 _externalEvent = ExternalEvent.Create(this);
             }
         }
 
-        /// <summary>
-        /// Schedules an action to be executed in the Revit UI context and waits for it to complete.
-        /// </summary>
-        public object ExecuteAction(Func<UIApplication, object> actionToExecute)
+        public async Task<object> ExecuteActionAsync(Func<UIApplication, object> actionToExecute)
         {
             var wrapper = new ActionWrapper
             {
@@ -67,12 +47,9 @@ namespace revit_mcp_plugin.Core
                 _externalEvent.Raise();
             }
 
-            return wrapper.Tcs.Task.Result;
+            return await wrapper.Tcs.Task;
         }
 
-        /// <summary>
-        /// The method that Revit calls in the UI context when the ExternalEvent is raised.
-        /// </summary>
         public void Execute(UIApplication app)
         {
             ActionWrapper currentAction;
@@ -98,9 +75,6 @@ namespace revit_mcp_plugin.Core
 
         public string GetName() => "ApiExecutor";
 
-        /// <summary>
-        /// Disposes the external event and the singleton instance.
-        /// </summary>
         public void Dispose()
         {
             _externalEvent?.Dispose();
