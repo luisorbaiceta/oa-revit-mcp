@@ -89,30 +89,19 @@ namespace RevitMCPCommandSet.Commands
                 throw new InvalidOperationException($"No event handler registered or created for command '{CommandName}'.");
             }
 
+            // Set parameters on the handler if the method exists
             var setParametersMethod = _handler.GetType().GetMethod("SetParameters");
-            if (setParametersMethod != null)
-            {
-                setParametersMethod.Invoke(_handler, new object[] { parameters });
-            }
+            setParametersMethod?.Invoke(_handler, new object[] { parameters });
 
-            var externalEvent = ExternalEvent.Create(_handler);
-            externalEvent.Raise();
+            // We are already on the UI thread thanks to the ApiExecutor framework.
+            // Directly invoke the handler's Execute method to perform the action, avoiding a nested event and deadlock.
+            _handler.Execute(_uiApp);
 
-            if (_handler is IWaitableExternalEventHandler waitableHandler)
+            // After execution, get the result from the handler's Result property, if it exists.
+            var resultProperty = _handler.GetType().GetProperty("Result");
+            if (resultProperty != null)
             {
-                if (waitableHandler.WaitForCompletion(60000))
-                {
-                    var resultProperty = _handler.GetType().GetProperty("Result");
-                    if (resultProperty != null)
-                    {
-                        return resultProperty.GetValue(_handler);
-                    }
-                    return null;
-                }
-                else
-                {
-                    throw new TimeoutException($"Command '{CommandName}' timed out.");
-                }
+                return resultProperty.GetValue(_handler);
             }
 
             return null;
